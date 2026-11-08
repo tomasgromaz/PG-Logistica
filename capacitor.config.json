@@ -1,0 +1,8 @@
+{
+  "appId": "app.pglogistica.clientes",
+  "appName": "PG Logística",
+  "webDir": "www",
+  "backgroundColor": "#f2f6fd",
+  "android": { "allowMixedContent": false },
+  "ios": { "backgroundColor": "#f2f6fd" }
+}

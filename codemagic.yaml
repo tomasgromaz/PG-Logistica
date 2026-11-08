@@ -1,0 +1,89 @@
+# PG Logística · compilación en la nube con Codemagic (https://codemagic.io)
+# Genera las carpetas de Android y de iPhone en cada compilación, así que no hace falta Mac ni Android Studio.
+#
+# Los nombres que están entre comillas más abajo tienen que coincidir con los que cargues en Codemagic
+# (ver GUIA-PUBLICAR.md): "pg_logistica_upload" para la clave de Android y "PG Logistica" para la llave de Apple.
+# Si cambiás el appId en capacitor.config.json, cambialo también en "bundle_identifier".
+
+workflows:
+
+  android:
+    name: PG Logística · Android (.aab)
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      node: 22
+      java: 21
+      android_signing:
+        - pg_logistica_upload
+    scripts:
+      - name: Instalar dependencias
+        script: npm install
+      - name: Generar el proyecto de Android, íconos y pantalla de inicio
+        script: |
+          [ -d android ] || npx cap add android
+          npx capacitor-assets generate --android
+          npx cap sync android
+      - name: Numerar la versión (cada compilación sube el número)
+        script: |
+          sed -i -E "s/versionCode *=? *[0-9]+/versionCode $PROJECT_BUILD_NUMBER/" android/app/build.gradle
+          grep -n "versionCode" android/app/build.gradle
+      - name: Compilar
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease
+      - name: Firmar con tu clave de subida
+        script: |
+          AAB=$(find android/app/build/outputs/bundle/release -name "*.aab" | head -1)
+          jarsigner -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore "$CM_KEYSTORE_PATH" -storepass "$CM_KEYSTORE_PASSWORD" -keypass "$CM_KEY_PASSWORD" \
+            "$AAB" "$CM_KEY_ALIAS"
+          cp "$AAB" pg-logistica-android.aab
+    artifacts:
+      - pg-logistica-android.aab
+
+  ios:
+    name: PG Logística · iPhone (TestFlight)
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    integrations:
+      app_store_connect: PG Logistica
+    environment:
+      node: 22
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: app.pglogistica.clientes
+    scripts:
+      - name: Instalar dependencias
+        script: npm install
+      - name: Generar el proyecto de iPhone, íconos y pantalla de inicio
+        script: |
+          [ -d ios ] || npx cap add ios
+          npx capacitor-assets generate --ios
+          npx cap sync ios
+      - name: Numerar la versión y evitar la pregunta de cifrado de Apple
+        script: |
+          sed -i '' -E "s/CURRENT_PROJECT_VERSION = [0-9]+;/CURRENT_PROJECT_VERSION = $PROJECT_BUILD_NUMBER;/g" ios/App/App.xcodeproj/project.pbxproj
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" ios/App/App/Info.plist \
+            || /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" ios/App/App/Info.plist
+      - name: Aplicar la firma de Apple
+        script: xcode-project use-profiles
+      - name: Compilar el .ipa
+        script: |
+          cd ios/App
+          if [ -d App.xcworkspace ]; then
+            xcode-project build-ipa --workspace "App.xcworkspace" --scheme App
+          else
+            xcode-project build-ipa --project "App.xcodeproj" --scheme App
+          fi
+    artifacts:
+      - ios/App/build/ios/ipa/*.ipa
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
