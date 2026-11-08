@@ -15,7 +15,7 @@ workflows:
       node: 22
       java: 21
       android_signing:
-        - pg_logistica_upload
+        - pg-logistica-upload
     scripts:
       - name: Instalar dependencias
         script: npm install
