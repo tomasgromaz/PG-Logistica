@@ -2,7 +2,9 @@
 # Genera las carpetas de Android y de iPhone en cada compilación, así que no hace falta Mac ni Android Studio.
 #
 # Los nombres que están entre comillas más abajo tienen que coincidir con los que cargues en Codemagic
-# (ver GUIA-PUBLICAR.md): "pg_logistica_upload" para la clave de Android y "PG Logistica" para la llave de Apple.
+# (ver GUIA-PUBLICAR.md): "pg-logistica-upload" para la clave de Android y "PG Logistica" para la llave de Apple.
+# El flujo "android-prueba" no necesita ninguna clave: arma un .apk para verlo en un Android virtual
+# (App Preview de Codemagic) o instalarlo en un teléfono.
 # Si cambiás el appId en capacitor.config.json, cambialo también en "bundle_identifier".
 
 workflows:
@@ -42,6 +44,29 @@ workflows:
           cp "$AAB" pg-logistica-android.aab
     artifacts:
       - pg-logistica-android.aab
+
+  android-prueba:
+    name: PG Logística · Android de prueba (.apk, sin firma)
+    instance_type: linux_x2
+    max_build_duration: 45
+    environment:
+      node: 22
+      java: 21
+    scripts:
+      - name: Instalar dependencias
+        script: npm install
+      - name: Generar el proyecto de Android, íconos y pantalla de inicio
+        script: |
+          [ -d android ] || npx cap add android
+          npx capacitor-assets generate --android
+          npx cap sync android
+      - name: Compilar la versión de prueba
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+    artifacts:
+      - android/app/build/outputs/apk/debug/*.apk
 
   ios:
     name: PG Logística · iPhone (TestFlight)
