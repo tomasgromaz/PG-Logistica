@@ -1,7 +1,9 @@
 // Función de servidor "admin-clientes" (Supabase Edge Function).
 // Crea clientes con usuario y contraseña, les cambia la clave y los elimina.
-// Solo la puede usar el dueño (salvo "eliminar_yo", que cada cliente usa para borrar
-// su propia cuenta): verifica quién llama antes de hacer nada.
+// Solo la puede usar el dueño, salvo dos acciones:
+//   · "registrar": una persona nueva crea su propia cuenta (sin sesión, con límite por conexión).
+//   · "eliminar_yo": cada cliente borra su propia cuenta.
+// Verifica quién llama antes de hacer nada.
 //
 // Al desplegarla hay que DESACTIVAR "Verify JWT" (la verificación la hace
 // esta misma función con getUser y es_dueno, más abajo).
@@ -18,6 +20,12 @@ const cors = {
 const json = (cuerpo: unknown, status = 200) =>
   new Response(JSON.stringify(cuerpo), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
+const sha256 = async (t: string) =>
+  Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t))))
+    .map((x) => x.toString(16).padStart(2, '0')).join('');
+
+const MAX_REGISTROS_POR_HORA = 8;
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   if (req.method !== 'POST') return json({ error: 'Método no permitido.' }, 405);
@@ -30,6 +38,64 @@ Deno.serve(async (req: Request) => {
     };
     const anon = clave(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS'), Deno.env.get('SUPABASE_ANON_KEY'));
     const servicio = clave(Deno.env.get('SUPABASE_SECRET_KEYS'), Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
+
+    const b = await req.json();
+
+    // Registro propio: no hay sesión todavía. Se limita por conexión para evitar cuentas basura.
+    if (b.accion === 'registrar') {
+      const admin = createClient(url, servicio, { auth: { persistSession: false, autoRefreshToken: false } });
+      const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'desconocida';
+      const ipHash = await sha256(`${ip}|${Deno.env.get('SALT_IP') ?? 'pg-logistica'}`);
+      const hace1h = new Date(Date.now() - 3600 * 1000).toISOString();
+      const { count } = await admin.from('registros_intentos').select('id', { count: 'exact', head: true })
+        .eq('ip_hash', ipHash).gte('creado_en', hace1h);
+      if ((count ?? 0) >= MAX_REGISTROS_POR_HORA) {
+        return json({ error: 'Hubo demasiados intentos desde esta conexión. Probá de nuevo en una hora.' }, 429);
+      }
+      await admin.from('registros_intentos').insert({ ip_hash: ipHash });
+      await admin.from('registros_intentos').delete().lt('creado_en', new Date(Date.now() - 2 * 86400 * 1000).toISOString());
+
+      const usuario = String(b.usuario ?? '').trim().toLowerCase();
+      const nombre = String(b.nombre ?? '').trim().slice(0, 120);
+      const clave = String(b.password ?? '');
+      const telefono = String(b.telefono ?? '').trim().slice(0, 40);
+      const codigo = String(b.codigo ?? '').trim();
+      if (!/^[a-z0-9._-]{3,30}$/.test(usuario)) return json({ error: 'El usuario necesita entre 3 y 30 letras o números, sin espacios ni tildes.' }, 400);
+      if (nombre.length < 2) return json({ error: 'Escribí tu nombre y apellido.' }, 400);
+      if (clave.length < 6 || clave.length > 72) return json({ error: 'La contraseña necesita entre 6 y 72 caracteres.' }, 400);
+      if (telefono.replace(/\D/g, '').length < 8) return json({ error: 'Escribí un teléfono válido, con característica.' }, 400);
+
+      const { data: enUso } = await admin.rpc('admin_telefono_en_uso', { p_tel: telefono });
+      if (enUso === true) return json({ error: 'Ya hay una cuenta con ese teléfono. Si es tuya, ingresá con tu usuario.' }, 400);
+
+      let referente: string | null = null;
+      if (codigo) {
+        const { data: val } = await admin.rpc('validar_codigo', { p_codigo: codigo, p_telefono: telefono });
+        if (val?.error) return json({ error: val.error }, 400);
+        if (val?.ok) {
+          const cod = codigo.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+          const { data: ref } = await admin.from('perfiles').select('id').eq('codigo', cod).maybeSingle();
+          referente = ref?.id ?? null;
+        }
+      }
+
+      const { data: nuevo, error: errCrear } = await admin.auth.admin.createUser({
+        email: `${usuario}@${DOMINIO}`, password: clave, email_confirm: true, user_metadata: { usuario },
+      });
+      if (errCrear || !nuevo?.user) {
+        const ya = /already|registered|exists/i.test(errCrear?.message ?? '');
+        return json({ error: ya ? 'Ese usuario ya existe. Elegí otro.' : 'No se pudo crear la cuenta. Probá de nuevo.' }, 400);
+      }
+      const { error: errPerfil } = await admin.rpc('admin_crear_perfil', {
+        p_id: nuevo.user.id, p_usuario: usuario, p_nombre: nombre, p_telefono: telefono, p_unidad: null,
+      });
+      if (errPerfil) {
+        await admin.auth.admin.deleteUser(nuevo.user.id);
+        return json({ error: 'No se pudo crear la cuenta. Probá de nuevo.' }, 400);
+      }
+      if (referente) await admin.rpc('admin_fijar_referido', { p_id: nuevo.user.id, p_ref: referente });
+      return json({ ok: true, referido: !!referente });
+    }
 
     // 1. Quién llama: con su propio token.
     const autorizacion = req.headers.get('Authorization') ?? '';
@@ -44,8 +110,6 @@ Deno.serve(async (req: Request) => {
 
     // 2. Con permisos de servidor, hace lo pedido.
     const admin = createClient(url, servicio, { auth: { persistSession: false, autoRefreshToken: false } });
-    const b = await req.json();
-
     const clienteExiste = async (id: string) => {
       const { data } = await admin.from('perfiles').select('rol').eq('id', id).maybeSingle();
       return data?.rol === 'cliente';

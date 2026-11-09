@@ -1,8 +1,8 @@
 {
   "name": "pg-logistica",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "PG Logística: app de turnos, presupuestos y referidos (envoltorio Capacitor)",
+  "description": "PG Logística: turnos, presupuestos, descuentos, inventario y avisos (envoltorio Capacitor)",
   "scripts": {
     "assets": "capacitor-assets generate",
     "sync": "cap sync"
@@ -10,7 +10,9 @@
   "dependencies": {
     "@capacitor/android": "^8.0.0",
     "@capacitor/core": "^8.0.0",
-    "@capacitor/ios": "^8.0.0"
+    "@capacitor/filesystem": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "@capacitor/share": "^8.0.0"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

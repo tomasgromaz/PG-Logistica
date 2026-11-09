@@ -37,7 +37,7 @@
   --accent-ink:#0d3d9e;
   --ok:#0b7650; --ok-soft:#dbf2e7;
   --warn:#8a4f00; --warn-soft:#fbeed0;
-  --bad:#b0232e; --bad-soft:#fde4e6;
+  --bad:#b0232e; --bad-soft:#fde4e6; --on-bad:#ffffff;
   --hero-a:#0f43b0; --hero-b:#2271f2;
   --scrim:rgba(6,16,36,.55);
   --shadow:0 1px 2px rgba(10,30,70,.06),0 10px 28px rgba(10,30,70,.07);
@@ -49,7 +49,7 @@
     --bg:#06101f; --surface:#0d1a30; --surface-2:#142540; --line:#223652;
     --fg:#e8eefb; --fg-2:#a9b8d0; --fg-3:#8496b3;
     --accent:#5a9bff; --accent-hover:#7bb0ff; --on-accent:#05122a; --accent-soft:#12305f; --accent-ink:#b3d0ff;
-    --ok:#4cd39b; --ok-soft:#0f3a2c; --warn:#f2b55c; --warn-soft:#3a2b0f; --bad:#ff8189; --bad-soft:#401a21;
+    --ok:#4cd39b; --ok-soft:#0f3a2c; --warn:#f2b55c; --warn-soft:#3a2b0f; --bad:#ff8189; --bad-soft:#401a21; --on-bad:#3b0a10;
     --hero-a:#0b2a63; --hero-b:#1650b5;
     --scrim:rgba(0,0,0,.65);
     --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.35);
@@ -61,7 +61,7 @@
   --bg:#06101f; --surface:#0d1a30; --surface-2:#142540; --line:#223652;
   --fg:#e8eefb; --fg-2:#a9b8d0; --fg-3:#8496b3;
   --accent:#5a9bff; --accent-hover:#7bb0ff; --on-accent:#05122a; --accent-soft:#12305f; --accent-ink:#b3d0ff;
-  --ok:#4cd39b; --ok-soft:#0f3a2c; --warn:#f2b55c; --warn-soft:#3a2b0f; --bad:#ff8189; --bad-soft:#401a21;
+  --ok:#4cd39b; --ok-soft:#0f3a2c; --warn:#f2b55c; --warn-soft:#3a2b0f; --bad:#ff8189; --bad-soft:#401a21; --on-bad:#3b0a10;
   --hero-a:#0b2a63; --hero-b:#1650b5;
   --scrim:rgba(0,0,0,.65);
   --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.35);
@@ -310,6 +310,29 @@ button.row:hover{background:var(--surface-2)}
 @media (min-width:900px){#toast{bottom:28px}}
 @media (prefers-reduced-motion:reduce){#toast{transition:none}}
 
+/* ---------- avisos, preferencias y descuentos ---------- */
+.icon-btn.bell{position:relative}
+.dot{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:var(--bad);color:var(--on-bad);font:700 11px/15px var(--font-body);text-align:center;font-variant-numeric:tabular-nums;border:2px solid var(--surface)}
+.row.aviso{align-items:start;grid-template-columns:auto minmax(0,1fr)}
+.row.aviso.nuevo{background:var(--accent-soft)}
+.row.aviso.nuevo:hover{background:var(--accent-soft)}
+.av-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--surface-2);color:var(--accent)}
+.aviso.nuevo .av-ic{background:var(--surface)}
+.sw{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
+.sw input{width:22px;height:22px;margin-top:1px;accent-color:var(--accent);flex:none}
+.sw-t{display:grid;gap:2px;min-width:0}
+.sw-t small{color:var(--fg-3);font-size:13px;line-height:1.35}
+.sw-group{margin-top:14px}
+.sw-group .eyebrow{margin-bottom:2px}
+.disc-list{display:grid;gap:10px}
+.disc-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);min-width:0}
+.disc-row .grow{flex:1 1 150px;min-width:0}
+.pctbig{font:700 28px/1 var(--font-display);color:var(--accent);min-width:60px;letter-spacing:-.02em}
+.alert-card{border-color:var(--accent);background:var(--accent-soft)}
+.saving{font-size:13px;font-weight:700;color:var(--ok);background:var(--ok-soft);border-radius:99px;padding:5px 12px;justify-self:start;display:inline-block;margin-top:2px}
+input[type=search].in{-webkit-appearance:none;appearance:none}
+input[type=time].in,input[type=date].in{min-width:0}
+
 /* ---------- pedido público ---------- */
 .pub{max-width:760px;margin:0 auto;padding-top:20px;padding-bottom:56px;display:grid;gap:18px}
 .pub-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -326,7 +349,7 @@ button.row:hover{background:var(--surface-2)}
 'use strict';
 
 /* =====================================================================
-   PG Logística · app de turnos, presupuestos y referidos
+   PG Logística · app de turnos, presupuestos, inventario y descuentos
    Dos modos de funcionamiento:
    · NUBE: con NUBE_URL cargada, los datos viven en Supabase (login real,
      reglas en el servidor, varios dispositivos).
@@ -360,6 +383,12 @@ const ML = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','s
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 const fmtLargo = iso => { const d = parseISO(iso); return `${cap(DL[d.getDay()])} ${d.getDate()} de ${ML[d.getMonth()]}`; };
 const fmtMesAnio = iso => { const d = parseISO(iso); return `${ML[d.getMonth()]} de ${d.getFullYear()}`; };
+const ddmm = iso => { const [, m, d] = iso.split('-'); return `${d}/${m}`; };
+const mesDe = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-01`;
+const mesActualISO = () => mesDe(new Date());
+const finDeMes = iso => { const d = parseISO(iso); return isoDate(new Date(d.getFullYear(), d.getMonth()+1, 0)); };
+const fmtMes = iso => ML[parseISO(iso).getMonth()];
+const fmtMs = ms => fmtCorto(isoDate(new Date(ms)));
 const fmtCorto = iso => { const d = parseISO(iso); return `${DS[d.getDay()]} ${d.getDate()} ${MS[d.getMonth()]}`; };
 const money = n => new Intl.NumberFormat('es-AR', {style:'currency', currency:'ARS', maximumFractionDigits:0}).format(n || 0);
 const digits = s => String(s || '').replace(/\D/g, '');
@@ -371,10 +400,11 @@ const waNumero = tel => { let d = digits(tel).replace(/^0+/, ''); if (!d) return
 const waLink = (tel, texto) => `https://wa.me/${waNumero(tel)}?text=${encodeURIComponent(texto)}`;
 
 const SERVICIOS = ['Mudanza','Movimiento de maquinaria','Guardamuebles (nuevo)','Flete o traslado','Otro'];
+const CONDICIONES = ['Bueno','Regular','Con daños'];
 const MOTIVOS = ['Retirar cosas','Dejar cosas','Revisar mi guardamueble','Otro'];
 
 /* ---------- almacenamiento ---------- */
-const KEY = 'pg-logistica-v1', KS = 'pg-sesion', KT = 'pg-tema';
+const KEY = 'pg-logistica-v2', KS = 'pg-sesion', KT = 'pg-tema';
 const mem = {};
 const ls = {
   get(k){ try { const v = localStorage.getItem(k); return v === null ? (mem[k] ?? null) : v; } catch(e){ return mem[k] ?? null; } },
@@ -382,7 +412,7 @@ const ls = {
   del(k){ delete mem[k]; try { localStorage.removeItem(k); } catch(e){} }
 };
 let DB = null;
-function load(){ try { const raw = ls.get(KEY); if (raw) { const d = JSON.parse(raw); if (d && d.v === 1) return d; } } catch(e){} return null; }
+function load(){ try { const raw = ls.get(KEY); if (raw) { const d = JSON.parse(raw); if (d && d.v === 2) { d.config = { ...cfgDefecto(), ...d.config }; return d; } } } catch(e){} return null; }
 function save(){ ls.set(KEY, JSON.stringify(DB)); }
 
 async function hash(usuario, pass){
@@ -396,20 +426,20 @@ async function hash(usuario, pass){
   }
 }
 
-const cfgDefecto = () => ({ descReferente:20, descReferido:10, tope:50, cupo:2, franjas:['09:00','10:00','11:00','12:00','15:00','16:00','17:00'], dias:[1,2,3,4,5,6], horasCancelar:2, diasAnticipo:30, whatsapp:'' });
-const baseVacia = () => ({ v:1, config:cfgDefecto(), usuarios:[], unidades:[], turnos:[], presupuestos:[], seq:{ pres:0 }, ocup:{}, referidos:[] });
+const cfgDefecto = () => ({ descReferente:3, descReferido:5, tope:9, vencReferidosMeses:0, cupo:2, franjas:['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00'], franjasSab:['09:00','10:00','11:00','12:00'], dias:[1,2,3,4,5,6], horasCancelar:2, diasAnticipo:30, whatsapp:'', recordarTurnoHs:3, recordarMudanzaHs:3, promoDias:[3,6] });
+const baseVacia = () => ({ v:2, config:cfgDefecto(), usuarios:[], unidades:[], turnos:[], presupuestos:[], seq:{ pres:0 }, ocup:{}, referidos:[], avisos:[], mensuales:[], creditos:[], inventario:[] });
 
 async function crearBase(conEjemplos){
   const db = baseVacia();
-  db.usuarios.push({ id:'u-dueno', usuario:'admin', passHash: await hash('admin','pg2026'), rol:'dueno', nombre:'Administración', telefono:'', codigo:'', credito:0, unidadId:null });
+  db.usuarios.push({ id:'u-dueno', usuario:'admin', passHash: await hash('admin','pg2026'), rol:'dueno', nombre:'Administración', telefono:'', codigo:'', avisos:{}, referidoPor:null, unidadId:null });
   if (!conEjemplos) return db;
 
-  const cli = async (usuario, nombre, tel, unidadId, credito, codigo) =>
-    ({ id:'u-'+usuario, usuario, passHash: await hash(usuario,'1234'), rol:'cliente', nombre, telefono:tel, codigo, credito, unidadId });
+  const cli = async (usuario, nombre, tel, unidadId, codigo) =>
+    ({ id:'u-'+usuario, usuario, passHash: await hash(usuario,'1234'), rol:'cliente', nombre, telefono:tel, codigo, avisos:{}, referidoPor:null, unidadId });
   db.usuarios.push(
-    await cli('maria','María González','11 5555-0142','un-a01',0,'PG-MARIA27'),
-    await cli('carlos','Carlos Benítez','11 5555-0178','un-a03',0,'PG-CARLOS41'),
-    await cli('lucia','Lucía Fernández','11 5555-0116','un-b02',20,'PG-LUCIA18')
+    await cli('maria','María González','11 5555-0142','un-a01','PG-MARIA27'),
+    await cli('carlos','Carlos Benítez','11 5555-0178','un-a03','PG-CARLOS41'),
+    await cli('lucia','Lucía Fernández','11 5555-0116','un-b02','PG-LUCIA18')
   );
   const hoy = new Date();
   const desde = n => isoDate(addDays(hoy, -n));
@@ -429,11 +459,45 @@ async function crearBase(conEjemplos){
     T('u-lucia','un-b02', abierto(1), '11:00', 'Revisar mi guardamueble', 'pendiente'),
     T('u-maria','un-a01', isoDate(addDays(hoy,-12)), '16:00', 'Dejar cosas', 'realizado')
   );
-  const P = o => { db.seq.pres++; return Object.assign({ id:uid(), num:db.seq.pres, clienteId:null, nombre:'', telefono:'', servicio:'Mudanza', origen:'', destino:'', fecha:'', detalle:'', codigo:'', codigoRefId:null, estado:'pendiente', monto:0, descRef:0, descCred:0, nota:'', recompensado:false, creado:Date.now() }, o); };
-  db.presupuestos.push(
-    P({ clienteId:'u-lucia', nombre:'Lucía Fernández', telefono:'11 5555-0116', servicio:'Mudanza', origen:'Villa Urquiza, CABA (2.º piso, ascensor)', destino:'San Isidro (casa, planta baja)', fecha:abierto(14), detalle:'Departamento de 3 ambientes. Heladera, lavarropas, cama de 2 plazas y unas 30 cajas.', estado:'cotizado', monto:185000, descCred:20, nota:'Incluye 3 ayudantes y embalaje de muebles.', creado:Date.now()-86400000*2 }),
-    P({ nombre:'Martín Ríos', telefono:'11 4444-0199', servicio:'Movimiento de maquinaria', origen:'Parque industrial, Pilar', destino:'Taller en Escobar', fecha:abierto(9), detalle:'Torno paralelo de unos 1.800 kg. Hay autoelevador en origen.', codigo:'PG-MARIA27', codigoRefId:'u-maria', estado:'pendiente', creado:Date.now()-3600000*5 }),
-    P({ nombre:'Sofía Aguirre', telefono:'11 3333-0127', servicio:'Mudanza', origen:'Almagro', destino:'Caballito', fecha:isoDate(addDays(hoy,-30)), detalle:'Monoambiente.', codigo:'PG-LUCIA18', codigoRefId:'u-lucia', estado:'realizado', monto:90000, descRef:10, nota:'', recompensado:true, creado:Date.now()-86400000*40 })
+  const P = o => { db.seq.pres++; return Object.assign({ id:uid(), num:db.seq.pres, clienteId:null, nombre:'', telefono:'', servicio:'Mudanza', origen:'', destino:'', fecha:'', hora:'', detalle:'', codigo:'', codigoRefId:null, estado:'pendiente', monto:0, descRef:0, descCred:0, descMensual:0, nota:'', recompensado:false, creado:Date.now() }, o); };
+  const pLucia = P({ clienteId:'u-lucia', nombre:'Lucía Fernández', telefono:'11 5555-0116', servicio:'Mudanza', origen:'Villa Urquiza, CABA (2.º piso, ascensor)', destino:'San Isidro (casa, planta baja)', fecha:abierto(14), hora:'09:00', detalle:'Departamento de 3 ambientes. Heladera, lavarropas, cama de 2 plazas y unas 30 cajas.', estado:'cotizado', monto:185000, descCred:3, descMensual:4, nota:'Incluye 3 ayudantes y embalaje de muebles.', creado:Date.now()-86400000*2 });
+  const pMartin = P({ nombre:'Martín Ríos', telefono:'11 4444-0199', servicio:'Movimiento de maquinaria', origen:'Parque industrial, Pilar', destino:'Taller en Escobar', fecha:abierto(9), detalle:'Torno paralelo de unos 1.800 kg. Hay autoelevador en origen.', codigo:'PG-MARIA27', codigoRefId:'u-maria', estado:'pendiente', creado:Date.now()-3600000*5 });
+  const pSofia = P({ nombre:'Sofía Aguirre', telefono:'11 3333-0127', servicio:'Mudanza', origen:'Almagro', destino:'Caballito', fecha:isoDate(addDays(hoy,-30)), detalle:'Monoambiente.', codigo:'PG-LUCIA18', codigoRefId:'u-lucia', estado:'realizado', monto:90000, descRef:5, nota:'', recompensado:true, creado:Date.now()-86400000*40 });
+  db.presupuestos.push(pLucia, pMartin, pSofia);
+
+  // descuentos: del mes (uno por cliente) y por referidos
+  const mes = mesActualISO(), mesAnt = mesDe(new Date(hoy.getFullYear(), hoy.getMonth()-1, 1));
+  const M = (clienteId, mes_, tipo, pct, estado, presupuestoId = null, usadoEn = null) => ({ id:uid(), clienteId, mes:mes_, tipo, pct, estado, presupuestoId, usadoEn, creado:Date.now()-86400000 });
+  db.mensuales.push(
+    M('u-maria', mes, 'mudanza', 3, 'disponible'), M('u-maria', mesAnt, 'guardamuebles', 2, 'usado', null, Date.now()-86400000*20),
+    M('u-carlos', mes, 'guardamuebles', 5, 'disponible'),
+    M('u-lucia', mes, 'mudanza', 4, 'reservado', pLucia.id), M('u-lucia', mesAnt, 'guardamuebles', 3, 'disponible')
+  );
+  db.creditos.push(
+    { id:uid(), clienteId:'u-lucia', pct:3, origenId:pSofia.id, estado:'reservado', presupuestoId:pLucia.id, venceEn:null, usadoEn:null, creado:Date.now()-86400000*29 }
+  );
+
+  // inventario del guardamuebles
+  const I = (clienteId, nombre, cantidad, condicion, nota, dias) => ({ id:uid(), clienteId, nombre, cantidad, condicion, nota, ingreso:desde(dias), actualizado:Date.now() });
+  db.inventario.push(
+    I('u-maria','Caja de libros',12,'Bueno','Rotuladas por tema',230), I('u-maria','Sillón de 3 cuerpos',1,'Bueno','Funda gris, con nylon',230),
+    I('u-maria','Mesa de comedor',1,'Regular','Una pata con raspón',230), I('u-maria','Silla de comedor',6,'Bueno','',230),
+    I('u-maria','Lámpara de pie',2,'Bueno','Envueltas en plástico burbuja',60), I('u-maria','Bicicleta rodado 26',1,'Con daños','Falta un pedal',60),
+    I('u-carlos','Heladera',1,'Bueno','Desenchufada, puerta atada',110), I('u-carlos','Colchón de 2 plazas',1,'Bueno','Con funda',110),
+    I('u-carlos','Caja de vajilla',5,'Regular','Frágil',90), I('u-carlos','Escritorio',1,'Bueno','',40),
+    I('u-lucia','Cama de 2 plazas',1,'Bueno','Desarmada: base, respaldo y tornillos en bolsa',70),
+    I('u-lucia','Caja de ropa',8,'Bueno','',70), I('u-lucia','Cuadros',4,'Bueno','Con protectores en las esquinas',45)
+  );
+
+  // avisos de ejemplo
+  const A = (usuarioId, tipo, titulo, cuerpo, refTipo, horas, leido) => ({ id:uid(), usuarioId, tipo, titulo, cuerpo, refTipo, refId:null, clave:null, creado:Date.now()-horas*36e5, leido: leido ? Date.now()-horas*36e5 + 6e5 : null });
+  db.avisos.push(
+    A('u-dueno','presupuesto_nuevo','Nuevo pedido de presupuesto',`P-${String(pMartin.num).padStart(4,'0')} · Movimiento de maquinaria · Martín R.`,'presupuesto',5,false),
+    A('u-dueno','turno_nuevo','Nuevo turno por confirmar','Carlos B. pidió turno para el '+ddmm(abierto(2))+' a las 15:00 hs · Dejar cosas','turno',3,false),
+    A('u-maria','turno','Turno confirmado','Te esperamos el '+ddmm(abierto(1))+' a las 10:00 hs · Retirar cosas','turno',20,true),
+    A('u-maria','promo_mensual','Tu descuento de '+ML[hoy.getMonth()],'Tenés 3% de descuento en tu próxima mudanza hasta el '+ddmm(finDeMes(mes))+'. Se aplica solo cuando confirmemos tu presupuesto.','descuentos',30,false),
+    A('u-lucia','presupuesto','Tenés un presupuesto nuevo',`P-${String(pLucia.num).padStart(4,'0')} · Mudanza. Ya podés verlo y responderlo en la app.`,'presupuesto',46,false),
+    A('u-lucia','promo_mensual','Tu descuento de '+ML[hoy.getMonth()],'Tenés 4% de descuento en tu próxima mudanza hasta el '+ddmm(finDeMes(mes))+'. Se aplica solo cuando confirmemos tu presupuesto.','descuentos',30,true)
   );
   return db;
 }
@@ -449,12 +513,15 @@ const nPres = p => 'P-' + String(p.num).padStart(4, '0');
 // referidos de un cliente: en la nube vienen resumidos del servidor (sin teléfono ni datos de contacto)
 const refsDe = id => NUBE ? DB.referidos
   : DB.presupuestos.filter(p => p.codigoRefId === id).map(p => ({ num:p.num, nombre:p.nombre, servicio:p.servicio, estado:p.estado, creado:p.creado })).sort((a,b) => b.creado - a.creado);
+const itemsDe = id => DB.inventario.filter(i => i.clienteId === id).sort((a,b) => a.nombre.localeCompare(b.nombre, 'es'));
 
 /* ---------- estado de la interfaz ---------- */
-const S = { user:null, view:null, pub:null, filtroT:'proximos', filtroP:'todos', filtroU:'' };
+const S = { user:null, view:null, pub:null, filtroT:'proximos', filtroP:'todos', filtroU:'', invCli:null, qInv:'', sinLeer:null };
 const esDueno = () => S.user && S.user.rol === 'dueno';
 const misTurnos = () => DB.turnos.filter(t => esDueno() || t.clienteId === S.user.id);
 const misPres = () => DB.presupuestos.filter(p => esDueno() || p.clienteId === S.user.id);
+const misAvisos = () => DB.avisos.filter(a => S.user && a.usuarioId === S.user.id).sort((a,b) => b.creado - a.creado);
+const avisosSinLeer = () => misAvisos().filter(a => !a.leido).length;
 const activo = t => t.estado === 'pendiente' || t.estado === 'confirmado';
 const futuro = t => dtTurno(t.fecha, t.hora) > new Date();
 const porFecha = (a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora);
@@ -465,6 +532,8 @@ function slotInfo(fecha, hora){
   const ocupados = NUBE ? (DB.ocup[fecha + '|' + hora] || 0) : DB.turnos.filter(t => t.fecha === fecha && t.hora === hora && activo(t)).length;
   return { libre: DB.config.cupo - ocupados, pasado: dtTurno(fecha, hora) <= new Date() };
 }
+// Lunes a viernes tienen sus horarios y el sábado (y el domingo, si se habilita) los suyos
+const franjasDe = fecha => { const d = parseISO(fecha).getDay(); return ((d === 0 || d === 6) ? DB.config.franjasSab : DB.config.franjas) || []; };
 function diasDisponibles(){
   const out = []; const h = new Date(); h.setHours(0,0,0,0);
   for (let i = 0; i <= DB.config.diasAnticipo; i++) {
@@ -477,6 +546,8 @@ function crearTurno({ clienteId, fecha, hora, motivo, nota, estado }){
   const u = usr(clienteId);
   if (!u || !u.unidadId) return { error:'Este cliente no tiene un guardamueble asignado.' };
   if (!fecha || !hora) return { error:'Elegí un día y un horario.' };
+  if (!franjasDe(fecha).includes(hora)) return { error:'Ese horario no está disponible.' };
+  if (!DB.config.dias.includes(parseISO(fecha).getDay())) return { error:'Ese día no se atiende.' };
   const si = slotInfo(fecha, hora);
   if (si.pasado) return { error:'Ese horario ya pasó.' };
   if (si.libre <= 0) return { error:'Ese horario se completó. Elegí otro.' };
@@ -484,7 +555,7 @@ function crearTurno({ clienteId, fecha, hora, motivo, nota, estado }){
   if (act.length >= 3) return { error:'Ya hay 3 turnos activos. Hay que cancelar uno para pedir otro.' };
   if (act.some(t => t.fecha === fecha)) return { error:'Ya hay un turno para ese día.' };
   const t = { id:uid(), clienteId, unidadId:u.unidadId, fecha, hora, motivo, nota:nota||'', estado, creado:Date.now() };
-  DB.turnos.push(t); save();
+  DB.turnos.push(t); avisosTurno(t, null); save();
   return { ok:t };
 }
 function cancelarTurno(id, porDueno){
@@ -494,8 +565,224 @@ function cancelarTurno(id, porDueno){
     const hs = (dtTurno(t.fecha, t.hora) - new Date()) / 36e5;
     if (hs < DB.config.horasCancelar) return { error:`Se puede cancelar hasta ${DB.config.horasCancelar} hs antes. Avisanos por WhatsApp.` };
   }
-  t.estado = 'cancelado'; t.canceladoPor = porDueno ? 'dueno' : 'cliente'; save();
+  const antes = t.estado;
+  t.estado = 'cancelado'; t.canceladoPor = porDueno ? 'dueno' : 'cliente'; avisosTurno(t, antes); save();
   return { ok:true };
+}
+
+/* =====================================================================
+   Descuentos. En la nube los aplica el servidor al confirmar el presupuesto;
+   acá solo se muestran y se calculan los totales. Tres tipos que se suman:
+   · código de referido (5% al referido en su primera mudanza)
+   · descuentos por referidos (3% por cada referido que contrató, hasta el tope; uso único)
+   · descuento del mes (2 a 5%, en mudanzas o en guardamuebles; uso único; vence a fin de mes)
+   ===================================================================== */
+const tipoMensual = servicio => servicio === 'Mudanza' ? 'mudanza' : servicio === 'Guardamuebles (nuevo)' ? 'guardamuebles' : null;
+const TIPO_TXT = { mudanza:'mudanzas', guardamuebles:'guardamuebles' };
+const mensualDe = (id, mes = mesActualISO()) => DB.mensuales.find(m => m.clienteId === id && m.mes === mes);
+// 'disponible' del mes pasado ya no sirve: se muestra como vencido
+const estadoMensual = m => (m.estado === 'disponible' && m.mes < mesActualISO()) ? 'vencido' : m.estado;
+const vigenteC = c => c.estado === 'disponible' && (!c.venceEn || c.venceEn >= hoyISO());
+const estadoCredito = c => (c.estado === 'disponible' && !vigenteC(c)) ? 'vencido' : c.estado;
+const creditoLibre = id => DB.creditos.filter(c => c.clienteId === id && vigenteC(c)).reduce((s, c) => s + c.pct, 0);
+const creditoActivo = id => DB.creditos.filter(c => c.clienteId === id && (c.estado === 'reservado' || vigenteC(c))).reduce((s, c) => s + c.pct, 0);
+const dctoDe = (monto, pct) => Math.round(monto * pct / 100);
+const dPres = p => ({ ref:p.descRef || 0, cred:p.descCred || 0, men:p.descMensual || 0 });
+// Desglose de un precio con sus descuentos (todos los porcentajes se calculan sobre el precio base)
+function calc(monto, d){
+  const filas = [];
+  if (d.ref) filas.push({ txt:`Código de referido (${d.ref}%)`, pct:d.ref, imp:dctoDe(monto, d.ref) });
+  if (d.cred) filas.push({ txt:`Descuento por referidos (${d.cred}%)`, pct:d.cred, imp:dctoDe(monto, d.cred) });
+  if (d.men) filas.push({ txt:`Descuento del mes (${d.men}%)`, pct:d.men, imp:dctoDe(monto, d.men) });
+  const ahorro = filas.reduce((s, f) => s + f.imp, 0), pct = filas.reduce((s, f) => s + f.pct, 0);
+  return { filas, pct, ahorro, total:monto - ahorro };
+}
+const totalPres = p => p.monto > 0 ? calc(p.monto, dPres(p)).total : 0;
+// Qué descuentos se le aplicarían a un pedido si se confirma ahora (para la vista previa del dueño)
+function previsionDescuentos(p){
+  const cfg = DB.config, hoy = hoyISO(), mes = mesActualISO();
+  let cred = 0, men = 0, sinSorteo = false;
+  if (p.clienteId) {
+    if (p.servicio === 'Mudanza') {
+      const pool = DB.creditos.filter(c => c.clienteId === p.clienteId && (vigenteC(c) || (c.estado === 'reservado' && c.presupuestoId === p.id))).sort((a, b) => a.creado - b.creado);
+      for (const c of pool) { if (cred + c.pct > cfg.tope) break; cred += c.pct; }
+    }
+    const tipo = tipoMensual(p.servicio);
+    if (tipo) {
+      const m = DB.mensuales.find(x => x.presupuestoId === p.id && x.estado === 'reservado')
+             || DB.mensuales.find(x => x.clienteId === p.clienteId && x.mes === mes && x.tipo === tipo && x.estado === 'disponible');
+      if (m) men = m.pct; else if (!mensualDe(p.clienteId)) sinSorteo = true;
+    }
+  }
+  return { ref: p.codigoRefId ? cfg.descReferido : 0, cred, men, sinSorteo };
+}
+// Registro de descuentos de un cliente (del mes y por referidos), del más nuevo al más viejo
+function registroDe(id){
+  const filas = [];
+  DB.mensuales.filter(m => m.clienteId === id).forEach(m => {
+    const e = estadoMensual(m);
+    filas.push({ clave:'m' + m.id, titulo:`Del mes · ${cap(fmtMes(m.mes))}`, sub:`${m.pct}% en ${TIPO_TXT[m.tipo]}`, pct:m.pct, estado:e, orden:parseISO(m.mes).getTime(),
+      fecha: e === 'usado' && m.usadoEn ? `Usado el ${fmtMs(m.usadoEn)}` : e === 'vencido' ? `Venció el ${ddmm(finDeMes(m.mes))}` : `Vence el ${ddmm(finDeMes(m.mes))}`, presId:m.presupuestoId });
+  });
+  DB.creditos.filter(c => c.clienteId === id).forEach(c => {
+    const e = estadoCredito(c);
+    filas.push({ clave:'c' + c.id, titulo:'Por referido', sub:`${c.pct}% en mudanzas`, pct:c.pct, estado:e, orden:c.creado,
+      fecha: e === 'usado' && c.usadoEn ? `Usado el ${fmtMs(c.usadoEn)}` : e === 'vencido' ? `Venció el ${ddmm(c.venceEn)}` : c.venceEn ? `Vence el ${ddmm(c.venceEn)}` : 'Sin vencimiento', presId:c.presupuestoId });
+  });
+  return filas.sort((a, b) => b.orden - a.orden);
+}
+
+/* ---------- avisos (en modo demo los genera esta app; en la nube, el servidor) ---------- */
+const sectorDe = servicio => servicio === 'Guardamuebles (nuevo)' ? 'gm' : 'mud';
+const diaTxt = iso => iso === hoyISO() ? 'Hoy' : iso === isoDate(addDays(new Date(), 1)) ? 'Mañana' : 'El ' + ddmm(iso);
+function aviso(para, tipo, titulo, cuerpo, refTipo, refId, clave){
+  if (!para || !usr(para)) return;
+  if (clave && DB.avisos.some(a => a.usuarioId === para && a.clave === clave)) return;
+  DB.avisos.push({ id:uid(), usuarioId:para, tipo, titulo, cuerpo:cuerpo || '', refTipo:refTipo || null, refId:refId || null, clave:clave || null, creado:Date.now(), leido:null });
+}
+function avisoDueno(sector, cat, tipo, titulo, cuerpo, refTipo, refId, clave){
+  DB.usuarios.filter(u => u.rol === 'dueno' && (u.avisos || {})[sector + '_' + cat] !== false).forEach(u => aviso(u.id, tipo, titulo, cuerpo, refTipo, refId, clave));
+}
+function avisosTurno(t, antes){            // antes: estado anterior (null si el turno es nuevo)
+  const c = usr(t.clienteId), cuando = `${ddmm(t.fecha)} a las ${t.hora} hs`, quien = iniciales(c && c.nombre) || 'Un cliente';
+  if (antes === null) {
+    if (t.estado === 'pendiente') avisoDueno('gm', 'nuevos', 'turno_nuevo', 'Nuevo turno por confirmar', `${quien} pidió turno para el ${cuando} · ${t.motivo}`, 'turno', t.id);
+    else if (t.estado === 'confirmado') aviso(t.clienteId, 'turno', 'Te agendamos un turno', `El ${cuando} · ${t.motivo}`, 'turno', t.id);
+  } else if (t.estado !== antes) {
+    if (t.estado === 'confirmado') aviso(t.clienteId, 'turno', 'Turno confirmado', `Te esperamos el ${cuando} · ${t.motivo}`, 'turno', t.id);
+    else if (t.estado === 'rechazado') aviso(t.clienteId, 'turno', 'Turno no disponible', `No pudimos confirmar tu turno del ${cuando}. Pedí otro horario.`, 'turno', t.id);
+    else if (t.estado === 'cancelado' && t.canceladoPor === 'dueno') aviso(t.clienteId, 'turno', 'Turno cancelado', `Cancelamos tu turno del ${cuando}. Pedí uno nuevo cuando quieras.`, 'turno', t.id);
+    else if (t.estado === 'cancelado') avisoDueno('gm', 'nuevos', 'turno_cancelado', 'Turno cancelado por el cliente', `${quien} canceló el turno del ${cuando}`, 'turno', t.id);
+  }
+}
+function avisosPres(p, antes, montoCambio, porDueno){
+  const sec = sectorDe(p.servicio), num = nPres(p), quien = iniciales(p.nombre);
+  if (antes === null) { avisoDueno(sec, 'nuevos', 'presupuesto_nuevo', 'Nuevo pedido de presupuesto', `${num} · ${p.servicio} · ${quien}`, 'presupuesto', p.id); return; }
+  if (p.estado === antes && !(p.estado === 'cotizado' && montoCambio)) return;
+  if (p.estado === 'cotizado') aviso(p.clienteId, 'presupuesto', antes === 'cotizado' ? 'Actualizamos tu presupuesto' : 'Tenés un presupuesto nuevo', `${num} · ${p.servicio}. Ya podés verlo y responderlo en la app.`, 'presupuesto', p.id);
+  else if (p.estado === 'aceptado' && !porDueno) avisoDueno(sec, 'nuevos', 'presupuesto_aceptado', 'Aceptaron un presupuesto', `${num} · ${p.servicio} · ${quien}`, 'presupuesto', p.id);
+  else if (p.estado === 'rechazado' && !porDueno) avisoDueno(sec, 'nuevos', 'presupuesto_rechazado', 'Rechazaron un presupuesto', `${num} · ${p.servicio} · ${quien}`, 'presupuesto', p.id);
+  else if (p.estado === 'rechazado') aviso(p.clienteId, 'presupuesto', 'Cerramos tu pedido', `${num} · ${p.servicio}. Escribinos si querés que lo revisemos.`, 'presupuesto', p.id);
+  else if (p.estado === 'cancelado') avisoDueno(sec, 'nuevos', 'presupuesto_cancelado', 'Cancelaron un pedido', `${num} · ${p.servicio} · ${quien}`, 'presupuesto', p.id);
+  else if (p.estado === 'realizado') aviso(p.clienteId, 'presupuesto', 'Servicio realizado', `${num} · ${p.servicio}. ¡Gracias por elegir PG Logística!`, 'presupuesto', p.id);
+}
+function avisarInventario(clienteId){          // un solo aviso por día aunque haya varios cambios
+  aviso(clienteId, 'inventario', 'Actualizamos tu inventario', 'Hay cambios en la lista de tus pertenencias guardadas.', 'inventario', null, 'inv-' + hoyISO());
+}
+
+/* ---------- descuentos y estados de presupuestos (modo demo) ---------- */
+function asegurarDescuento(id){
+  const c = usr(id); if (!c || c.rol !== 'cliente') return null;
+  const mes = mesActualISO();
+  let m = mensualDe(id, mes); if (m) return m;
+  m = { id:uid(), clienteId:id, mes, tipo:Math.random() < .5 ? 'mudanza' : 'guardamuebles', pct:2 + Math.floor(Math.random() * 4), estado:'disponible', presupuestoId:null, usadoEn:null, creado:Date.now() };
+  DB.mensuales.push(m);
+  if ((c.avisos || {}).promos !== false)
+    aviso(id, 'promo_mensual', `Tu descuento de ${fmtMes(mes)}`, `Tenés ${m.pct}% de descuento en ${m.tipo === 'mudanza' ? 'tu próxima mudanza' : 'guardamuebles'} hasta el ${ddmm(finDeMes(mes))}. Se aplica solo cuando confirmemos tu presupuesto.`, 'descuentos', null, 'mes-' + mes.slice(0, 7));
+  return m;
+}
+function confirmarLocal(p, monto, nota, hora){
+  const cfg = DB.config, ref = p.codigoRefId ? cfg.descReferido : 0; let cred = 0, men = 0;
+  if (p.clienteId) {
+    DB.creditos.forEach(c => { if (c.presupuestoId === p.id && c.estado === 'reservado') { c.estado = 'disponible'; c.presupuestoId = null; } });
+    if (p.servicio === 'Mudanza') {
+      for (const c of DB.creditos.filter(c => c.clienteId === p.clienteId && vigenteC(c)).sort((a, b) => a.creado - b.creado)) {
+        if (cred + c.pct > cfg.tope) break;
+        cred += c.pct; c.estado = 'reservado'; c.presupuestoId = p.id;
+      }
+    }
+    const tipo = tipoMensual(p.servicio);
+    if (tipo) {
+      let m = DB.mensuales.find(x => x.presupuestoId === p.id && x.estado === 'reservado');
+      if (!m) {
+        asegurarDescuento(p.clienteId);
+        m = DB.mensuales.find(x => x.clienteId === p.clienteId && x.mes === mesActualISO() && x.tipo === tipo && x.estado === 'disponible');
+        if (m) { m.estado = 'reservado'; m.presupuestoId = p.id; }
+      }
+      if (m) men = m.pct;
+    }
+  }
+  const antes = p.estado, montoAntes = p.monto;
+  Object.assign(p, { monto, descRef:ref, descCred:cred, descMensual:men, hora:hora || '', nota, estado:'cotizado' });
+  avisosPres(p, antes, montoAntes !== monto, true);
+  save();
+}
+// Cambia el estado de un presupuesto y reparte lo que corresponde: descuentos que vuelven o quedan usados, y avisos
+function setEstadoPres(p, nuevo, porDueno){
+  const antes = p.estado; p.estado = nuevo;
+  if (nuevo === 'rechazado' || nuevo === 'cancelado') {
+    DB.mensuales.forEach(m => { if (m.presupuestoId === p.id && m.estado === 'reservado') { m.estado = 'disponible'; m.presupuestoId = null; } });
+    DB.creditos.forEach(c => { if (c.presupuestoId === p.id && c.estado === 'reservado') { c.estado = c.venceEn && c.venceEn < hoyISO() ? 'vencido' : 'disponible'; c.presupuestoId = null; } });
+  } else if (nuevo === 'realizado') {
+    DB.mensuales.forEach(m => { if (m.presupuestoId === p.id && m.estado === 'reservado') { m.estado = 'usado'; m.usadoEn = Date.now(); } });
+    DB.creditos.forEach(c => { if (c.presupuestoId === p.id && c.estado === 'reservado') { c.estado = 'usado'; c.usadoEn = Date.now(); } });
+  }
+  avisosPres(p, antes, false, porDueno);
+}
+function realizarLocal(p){
+  const cfg = DB.config, yaRecompensado = p.recompensado; let out = { referente:null, suma:0 };
+  p.recompensado = p.recompensado || !!p.codigoRefId;
+  setEstadoPres(p, 'realizado', true);
+  if (p.codigoRefId && !yaRecompensado) {
+    const rf = usr(p.codigoRefId);
+    if (rf) {
+      const antes = creditoActivo(rf.id), suma = Math.min(cfg.descReferente, Math.max(0, cfg.tope - antes));
+      if (suma > 0) {
+        const v = new Date(); v.setMonth(v.getMonth() + cfg.vencReferidosMeses);
+        DB.creditos.push({ id:uid(), clienteId:rf.id, pct:suma, origenId:p.id, estado:'disponible', presupuestoId:null, venceEn: cfg.vencReferidosMeses > 0 ? isoDate(v) : null, usadoEn:null, creado:Date.now() });
+      }
+      aviso(rf.id, 'referido', suma > 0 ? `¡Sumaste ${suma}% de descuento!` : 'Tu referido contrató',
+        suma > 0 ? `Tu referido contrató con tu código. Ahora tenés ${antes + suma}% para tu próxima mudanza.` : `Tu referido contrató con tu código. Ya llegaste al máximo de ${cfg.tope}%.`, 'descuentos');
+      out = { referente:rf.nombre, suma };
+    }
+  }
+  save(); return out;
+}
+function vencerCreditos(){ DB.creditos.forEach(c => { if (c.estado === 'disponible' && c.venceEn && c.venceEn < hoyISO()) c.estado = 'vencido'; }); }
+
+/* Recordatorios y promociones. En la nube corren solos en el servidor (cada 15 minutos y una vez al día). */
+function generarRecordatorios(){
+  const ahora = new Date(), cfg = DB.config, n0 = DB.avisos.length;
+  DB.turnos.filter(t => t.estado === 'confirmado').forEach(t => {
+    const f = dtTurno(t.fecha, t.hora);
+    if (f <= ahora || f - cfg.recordarTurnoHs * 36e5 > ahora) return;
+    const un = uni(t.unidadId), c = usr(t.clienteId), dia = diaTxt(t.fecha);
+    aviso(t.clienteId, 'recordatorio_turno', 'Recordatorio de tu turno', `${dia} a las ${t.hora} hs · ${t.motivo}${un ? ` · ${un.nombre} (${un.sede})` : ''}`, 'turno', t.id, 'rec-turno-' + t.id);
+    avisoDueno('gm', 'recordatorios', 'recordatorio_turno', `Turno ${dia.toLowerCase()} a las ${t.hora} hs`, `${c ? iniciales(c.nombre) : 'Cliente'} · ${t.motivo}`, 'turno', t.id, 'rec-turno-' + t.id);
+  });
+  DB.presupuestos.filter(p => p.estado === 'aceptado' && p.fecha).forEach(p => {
+    const f = dtTurno(p.fecha, p.hora || '08:00');
+    if (f <= ahora || f - cfg.recordarMudanzaHs * 36e5 > ahora) return;
+    const dia = diaTxt(p.fecha);
+    aviso(p.clienteId, 'recordatorio_mudanza', 'Recordatorio de tu ' + (p.servicio === 'Mudanza' ? 'mudanza' : 'servicio'), `${dia}${p.hora ? ' a las ' + p.hora + ' hs' : ''} · ${p.servicio}`, 'presupuesto', p.id, 'rec-pres-' + p.id);
+    avisoDueno(sectorDe(p.servicio), 'recordatorios', 'recordatorio_mudanza', `${p.servicio} ${dia.toLowerCase()}${p.hora ? ' a las ' + p.hora + ' hs' : ''}`, iniciales(p.nombre) + (p.destino ? ' → ' + p.destino : ''), 'presupuesto', p.id, 'rec-pres-' + p.id);
+  });
+  return DB.avisos.length - n0;
+}
+// Una vez por semana, en uno de los días elegidos (miércoles o sábado por defecto), sin amontonar avisos
+function promoSemanal(){
+  const hoy = new Date(), n0 = DB.avisos.length, cfg = DB.config;
+  const lunes = isoDate(addDays(hoy, -((hoy.getDay() + 6) % 7)));
+  let h = 7; for (const ch of lunes) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  if (hoy.getDay() !== cfg.promoDias[h % cfg.promoDias.length]) return 0;
+  clientes().forEach(c => {
+    if ((c.avisos || {}).promos === false) return;
+    if (DB.avisos.some(a => a.usuarioId === c.id && (a.tipo === 'promo_mensual' || a.tipo === 'promo_semanal') && a.creado > Date.now() - 3 * 864e5)) return;
+    const partes = [], m = mensualDe(c.id), libre = creditoLibre(c.id);
+    if (m && m.estado === 'disponible') partes.push(`${m.pct}% en ${TIPO_TXT[m.tipo]} (hasta el ${ddmm(finDeMes(m.mes))})`);
+    if (libre > 0) partes.push(`${libre}% por tus referidos (mudanzas)`);
+    const cuerpo = partes.length ? `Tenés disponible: ${partes.join(' y ')}. Se aplican solos cuando confirmemos tu presupuesto.`
+      : `Recomendá PG Logística con tu código ${c.codigo} y sumá ${cfg.descReferente}% por cada referido que contrate (hasta ${cfg.tope}%).`;
+    aviso(c.id, 'promo_semanal', 'Tus promociones de la semana', cuerpo, 'descuentos', null, 'promo-sem-' + lunes);
+  });
+  return DB.avisos.length - n0;
+}
+function tareasDemo(){
+  if (!DEMO || !DB) return;
+  const n0 = DB.avisos.length, c0 = JSON.stringify(DB.creditos);
+  clientes().forEach(c => asegurarDescuento(c.id));
+  vencerCreditos(); generarRecordatorios(); promoSemanal();
+  if (DB.avisos.length !== n0 || JSON.stringify(DB.creditos) !== c0) save();
 }
 
 /* ---------- reglas de presupuestos y referidos ---------- */
@@ -514,36 +801,21 @@ function validarCodigo(raw, tel){
   }
   return { ok:true, ref, pct:DB.config.descReferido };
 }
-function descuentosDe(p){
-  const ref = p.codigoRefId ? DB.config.descReferido : 0;
-  const cl = p.clienteId ? usr(p.clienteId) : null;
-  const cred = cl ? Math.min(cl.credito || 0, Math.max(0, DB.config.tope - ref)) : 0;
-  return { ref, cred };
-}
-const dctoDe = (monto, pct) => Math.round(monto * pct / 100);
-const totalDe = (monto, ref, cred) => monto - dctoDe(monto, ref) - dctoDe(monto, cred);
 function crearPres(d){
   DB.seq.pres++;
-  const v = validarCodigo(d.codigo, d.telefono);
-  const p = { id:uid(), num:DB.seq.pres, clienteId:d.clienteId||null, nombre:d.nombre, telefono:d.telefono, servicio:d.servicio, origen:d.origen, destino:d.destino, fecha:d.fecha, detalle:d.detalle,
-    codigo: v.ok ? normCodigo(d.codigo) : '', codigoRefId: v.ok ? v.ref.id : null, estado:'pendiente', monto:0, descRef:0, descCred:0, nota:'', recompensado:false, creado:Date.now() };
-  DB.presupuestos.push(p); save();
-  return p;
-}
-function guardarCotizacion(p, monto, nota){
-  const d = descuentosDe(p);
-  p.monto = monto; p.descRef = d.ref; p.descCred = d.cred; p.nota = nota; p.estado = 'cotizado'; save();
-}
-function marcarRealizado(p){
-  p.estado = 'realizado';
-  const cl = p.clienteId ? usr(p.clienteId) : null;
-  if (cl && p.descCred > 0) cl.credito = Math.max(0, (cl.credito || 0) - p.descCred);
-  if (p.codigoRefId && !p.recompensado) {
-    const rf = usr(p.codigoRefId);
-    if (rf) rf.credito = Math.min(DB.config.tope, (rf.credito || 0) + DB.config.descReferente);
-    p.recompensado = true;
+  const cl = d.clienteId ? usr(d.clienteId) : null;
+  let codigoRefId = null, codigo = '';
+  if (!cl) {
+    const v = validarCodigo(d.codigo, d.telefono);
+    if (v.ok && d.servicio === 'Mudanza') { codigoRefId = v.ref.id; codigo = normCodigo(d.codigo); }
+  } else if (cl.referidoPor && d.servicio === 'Mudanza' && !DB.presupuestos.some(p => p.clienteId === cl.id && p.codigoRefId && p.estado !== 'cancelado' && p.estado !== 'rechazado')) {
+    const rf = usr(cl.referidoPor);       // se registró con un código: lo usa en su primera mudanza
+    if (rf) { codigoRefId = rf.id; codigo = rf.codigo; }
   }
-  save();
+  const p = { id:uid(), num:DB.seq.pres, clienteId:d.clienteId||null, nombre:d.nombre, telefono:d.telefono, servicio:d.servicio, origen:d.origen, destino:d.destino, fecha:d.fecha, hora:'', detalle:d.detalle,
+    codigo, codigoRefId, estado:'pendiente', monto:0, descRef:0, descCred:0, descMensual:0, nota:'', recompensado:false, creado:Date.now() };
+  DB.presupuestos.push(p); avisosPres(p, null, false, esDueno()); save();
+  return p;
 }
 function generarCodigo(nombre){
   const base = sinAcentos(primerNombre(nombre)).toUpperCase().replace(/[^A-Z]/g, '').slice(0, 6) || 'CLI';
@@ -576,10 +848,10 @@ function errDe(status, j){
   if (e.code === 'invalid_credentials' || (j && j.error === 'invalid_grant') || /invalid login/i.test(texto || '')) e.message = 'Usuario o contraseña incorrectos.';
   else if (e.code === 'same_password') e.message = 'La contraseña nueva tiene que ser distinta de la actual.';
   else if (e.code === 'weak_password') e.message = 'Esa contraseña es muy fácil de adivinar. Probá con otra.';
+  else if (j && typeof j.error === 'string' && !j.error_code && !j.error_description && status < 500) e.message = j.error;   // función de servidor (ya en español)
   else if (status === 429) e.message = 'Demasiados intentos. Esperá unos minutos y probá de nuevo.';
   else if (e.code === '23505') e.message = 'Ya existe uno igual.';
   else if (e.code === 'P0001' && texto) e.message = texto;                                   // reglas del negocio, ya en español
-  else if (j && typeof j.error === 'string' && !j.error_code && !j.error_description && status < 500) e.message = j.error;   // función de servidor
   return e;
 }
 
@@ -621,7 +893,7 @@ async function http(ruta, o = {}){
 }
 const GET = ruta => http('/rest/v1/' + ruta);
 const RPC = (fn, args, anonimo) => http('/rest/v1/rpc/' + fn, { method:'POST', body:args || {}, auth:!anonimo });
-const FN = cuerpo => http('/functions/v1/admin-clientes', { method:'POST', body:cuerpo });
+const FN = (cuerpo, anonimo) => http('/functions/v1/admin-clientes', { method:'POST', body:cuerpo, auth:!anonimo });
 const ESCRIBIR = { 'Prefer':'return=representation' };
 async function escribir(metodo, ruta, cuerpo){      // para que un cambio bloqueado por permisos no pase en silencio
   const r = await http('/rest/v1/' + ruta, { method:metodo, body:cuerpo, headers:ESCRIBIR });
@@ -630,28 +902,46 @@ async function escribir(metodo, ruta, cuerpo){      // para que un cambio bloque
 }
 
 /* ---------- de la base a la app ---------- */
-const dePerfil = r => ({ id:r.id, usuario:r.usuario, rol:r.rol, nombre:r.nombre, telefono:r.telefono || '', codigo:r.codigo || '', credito:r.credito || 0, unidadId:null });
+const dePerfil = r => ({ id:r.id, usuario:r.usuario, rol:r.rol, nombre:r.nombre, telefono:r.telefono || '', codigo:r.codigo || '', avisos:r.avisos || {}, referidoPor:r.referido_por || null, unidadId:null });
 const deUnidad = r => ({ id:r.id, nombre:r.nombre, sede:r.sede, m2:Number(r.m2), clienteId:r.cliente_id, desde:r.desde });
 const deTurno = r => ({ id:r.id, clienteId:r.cliente_id, unidadId:r.unidad_id, fecha:r.fecha, hora:r.hora, motivo:r.motivo, nota:r.nota || '', estado:r.estado, canceladoPor:r.cancelado_por, creado:Date.parse(r.creado_en) });
-const dePres = r => ({ id:r.id, num:r.num, clienteId:r.cliente_id, nombre:r.nombre, telefono:r.telefono, servicio:r.servicio, origen:r.origen, destino:r.destino, fecha:r.fecha || '', detalle:r.detalle, codigo:r.codigo || '', codigoRefId:r.codigo_ref_id, estado:r.estado, monto:Number(r.monto) || 0, descRef:r.desc_ref, descCred:r.desc_cred, nota:r.nota || '', recompensado:r.recompensado, creado:Date.parse(r.creado_en) });
-const deConfig = r => ({ descReferente:r.desc_referente, descReferido:r.desc_referido, tope:r.tope, cupo:r.cupo, franjas:r.franjas, dias:r.dias, horasCancelar:r.horas_cancelar, diasAnticipo:r.dias_anticipo, whatsapp:r.whatsapp || '' });
-const aConfig = c => ({ desc_referente:c.descReferente, desc_referido:c.descReferido, tope:c.tope, cupo:c.cupo, franjas:c.franjas, dias:c.dias, horas_cancelar:c.horasCancelar, dias_anticipo:c.diasAnticipo, whatsapp:c.whatsapp });
+const dePres = r => ({ id:r.id, num:r.num, clienteId:r.cliente_id, nombre:r.nombre, telefono:r.telefono, servicio:r.servicio, origen:r.origen, destino:r.destino, fecha:r.fecha || '', hora:r.hora || '', detalle:r.detalle, codigo:r.codigo || '', codigoRefId:r.codigo_ref_id, estado:r.estado, monto:Number(r.monto) || 0, descRef:r.desc_ref || 0, descCred:r.desc_cred || 0, descMensual:r.desc_mensual || 0, nota:r.nota || '', recompensado:r.recompensado, creado:Date.parse(r.creado_en) });
+const deAviso = r => ({ id:r.id, usuarioId:r.usuario_id, tipo:r.tipo, titulo:r.titulo, cuerpo:r.cuerpo || '', refTipo:r.ref_tipo, refId:r.ref_id, clave:r.clave, creado:Date.parse(r.creado_en), leido:r.leido_en ? Date.parse(r.leido_en) : null });
+const deMensual = r => ({ id:r.id, clienteId:r.cliente_id, mes:r.mes, tipo:r.tipo, pct:r.pct, estado:r.estado, presupuestoId:r.presupuesto_id, usadoEn:r.usado_en ? Date.parse(r.usado_en) : null, creado:Date.parse(r.creado_en) });
+const deCredito = r => ({ id:r.id, clienteId:r.cliente_id, pct:r.pct, origenId:r.origen_id, estado:r.estado, presupuestoId:r.presupuesto_id, venceEn:r.vence_en, usadoEn:r.usado_en ? Date.parse(r.usado_en) : null, creado:Date.parse(r.creado_en) });
+const deItem = r => ({ id:r.id, clienteId:r.cliente_id, nombre:r.nombre, cantidad:r.cantidad, condicion:r.condicion, nota:r.nota || '', ingreso:r.ingreso || '', actualizado:Date.parse(r.actualizado_en) });
+const deConfig = r => ({ descReferente:r.desc_referente, descReferido:r.desc_referido, tope:r.tope, vencReferidosMeses:r.venc_referidos_meses || 0, cupo:r.cupo, franjas:r.franjas, franjasSab:r.franjas_sab || r.franjas, dias:r.dias, horasCancelar:r.horas_cancelar, diasAnticipo:r.dias_anticipo, whatsapp:r.whatsapp || '',
+  recordarTurnoHs:r.recordar_turno_hs || 3, recordarMudanzaHs:r.recordar_mudanza_hs || 3, promoDias:r.promo_dias && r.promo_dias.length ? r.promo_dias : [3, 6] });
+const aConfig = c => ({ desc_referente:c.descReferente, desc_referido:c.descReferido, tope:c.tope, venc_referidos_meses:c.vencReferidosMeses, cupo:c.cupo, franjas:c.franjas, franjas_sab:c.franjasSab, dias:c.dias, horas_cancelar:c.horasCancelar, dias_anticipo:c.diasAnticipo, whatsapp:c.whatsapp,
+  recordar_turno_hs:c.recordarTurnoHs, recordar_mudanza_hs:c.recordarMudanzaHs, promo_dias:c.promoDias });
 
 async function cargarPublico(){
   try { const r = await GET('config?select=*&id=eq.1'); if (r && r[0]) DB.config = deConfig(r[0]); return true; } catch(e){ return false; }
 }
+let mesAsegurado = '';
 async function cargarTodo(){
   const yoId = S.user && S.user.id;
   const desde = hoyISO(), hasta = isoDate(addDays(new Date(), 90));
-  const [cfg, per, uns, tur, pre, ocu, ref] = await Promise.all([
+  const leer = () => Promise.all([
     GET('config?select=*&id=eq.1'),
     GET('perfiles?select=*&order=creado_en'),
     GET('unidades?select=*&order=sede,nombre'),
     GET('turnos?select=*&order=fecha.desc,hora.desc&limit=1000'),
     GET('presupuestos?select=*&order=creado_en.desc&limit=1000'),
     RPC('ocupacion', { p_desde:desde, p_hasta:hasta }),
-    RPC('mis_referidos')                       // para el dueño vuelve vacío
+    RPC('mis_referidos'),                      // para el dueño vuelve vacío
+    GET('avisos?select=*&order=creado_en.desc&limit=150'),
+    GET('descuentos_mensuales?select=*&order=mes.desc&limit=1000'),
+    GET('creditos_ref?select=*&order=creado_en.desc&limit=1000'),
+    GET('inventario?select=*&order=nombre&limit=5000')
   ]);
+  let r = await leer();
+  const yoPer = (r[1] || []).find(x => x.id === yoId);
+  // cada cliente tiene su descuento del mes: si todavía no se sorteó, se pide una sola vez por mes y se vuelve a leer
+  if (yoPer && yoPer.rol === 'cliente' && mesAsegurado !== mesActualISO()) {
+    try { await RPC('asegurar_mi_descuento'); mesAsegurado = mesActualISO(); r = await leer(); } catch(e){ if (e.sesion) throw e; }
+  }
+  const [cfg, per, uns, tur, pre, ocu, ref, avs, men, cre, inv] = r;
   const db = baseVacia();
   if (cfg && cfg[0]) db.config = deConfig(cfg[0]);
   db.usuarios = (per || []).map(dePerfil);
@@ -661,7 +951,11 @@ async function cargarTodo(){
   db.presupuestos = (pre || []).map(dePres);
   db.seq.pres = db.presupuestos.reduce((m, p) => Math.max(m, p.num), 0);
   (ocu || []).forEach(o => { db.ocup[o.fecha + '|' + o.hora] = o.usados; });
-  db.referidos = (ref || []).map(r => ({ num:r.num, nombre:r.nombre, servicio:r.servicio, estado:r.estado, creado:Date.parse(r.creado_en) }));
+  db.referidos = (ref || []).map(x => ({ num:x.num, nombre:x.nombre, servicio:x.servicio, estado:x.estado, creado:Date.parse(x.creado_en) }));
+  db.avisos = (avs || []).map(deAviso);
+  db.mensuales = (men || []).map(deMensual);
+  db.creditos = (cre || []).map(deCredito);
+  db.inventario = (inv || []).map(deItem);
   const yo = db.usuarios.find(u => u.id === yoId);
   if (!yo) throw sinSesion();                         // el perfil ya no existe (por ejemplo, se eliminó la cuenta)
   DB = db; S.user = yo;
@@ -703,7 +997,7 @@ const opsNube = {
     if (!/^[a-z0-9._-]{3,}$/.test(usuario) || !clave) return { error:'Usuario o contraseña incorrectos.' };
     try {
       const j = await http('/auth/v1/token?grant_type=password', { method:'POST', auth:false, body:{ email:usuario + '@' + DOMINIO, password:clave } });
-      guardarSesion(sesDe(j)); S.user = { id:ses.id };
+      guardarSesion(sesDe(j)); S.user = { id:ses.id }; mesAsegurado = '';
       await cargarTodo();
       return { user:S.user };
     } catch(e){ S.user = null; guardarSesion(null); return { error:e.message }; }
@@ -725,7 +1019,7 @@ const opsNube = {
     if (S.user) await cargarTodo();
     return { ok:true, pres:{ id:r.id, num:r.num, nombre:d.nombre, telefono:d.telefono, servicio:d.servicio, fecha:d.fecha, codigo:r.codigo || '', descuento:r.descuento || 0 } };
   }),
-  cotizar: (id, monto, nota) => envolver(async () => { await RPC('cotizar_presupuesto', { p_id:id, p_monto:monto, p_nota:nota }); await cargarTodo(); return { ok:true }; }),
+  confirmar: (id, monto, nota, hora) => envolver(async () => { await RPC('confirmar_presupuesto', { p_id:id, p_monto:monto, p_nota:nota, p_hora:hora || null }); await cargarTodo(); return { ok:true }; }),
   responderPres: (id, accion) => envolver(async () => { await RPC('responder_presupuesto', { p_id:id, p_accion:accion }); await cargarTodo(); return { ok:true }; }),
   estadoPres: (id, estado) => envolver(async () => {
     const r = await RPC('cambiar_estado_presupuesto', { p_id:id, p_estado:estado });
@@ -768,18 +1062,43 @@ const opsNube = {
     try { await verificarClave(clave); } catch(e){ if (e.status !== 400) throw e; return { error:'La contraseña no es correcta.' }; }
     await FN({ accion:'eliminar_yo' });
     guardarSesion(null); return { ok:true };
-  })
+  }),
+  // cuenta propia: la crea la función de servidor (con límite por conexión) y después se ingresa con ella
+  registrar: d => envolver(async () => {
+    const r = await FN({ accion:'registrar', usuario:d.usuario, nombre:d.nombre, password:d.pass, telefono:d.telefono, codigo:d.codigo || '' }, true);
+    return { ok:true, referido:!!(r && r.referido) };
+  }),
+  // avisos
+  marcarLeidos: ids => envolver(async () => {
+    const n = ids && ids.length ? ids : null;
+    await RPC('marcar_avisos_leidos', n ? { p_ids:n } : {});
+    const ahora = Date.now(); DB.avisos.forEach(a => { if (!a.leido && (!n || n.includes(a.id))) a.leido = ahora; });
+    return { ok:true };
+  }),
+  guardarPrefs: prefs => envolver(async () => { const r = await RPC('guardar_prefs_avisos', { p_prefs:prefs }); S.user.avisos = r || { ...S.user.avisos, ...prefs }; return { ok:true }; }),
+  // inventario (lo carga la administración; el cliente solo lo ve)
+  guardarItem: d => envolver(async () => {
+    const cuerpo = { nombre:d.nombre, cantidad:d.cantidad, condicion:d.condicion, nota:d.nota || '', ingreso:d.ingreso || null };
+    if (d.id) await escribir('PATCH', 'inventario?id=eq.' + d.id, cuerpo);
+    else await escribir('POST', 'inventario', { cliente_id:d.clienteId, ...cuerpo });
+    await cargarTodo(); return { ok:true };
+  }),
+  guardarItems: lista => envolver(async () => {
+    await escribir('POST', 'inventario', lista.map(d => ({ cliente_id:d.clienteId, nombre:d.nombre, cantidad:d.cantidad, condicion:d.condicion || 'Bueno', nota:d.nota || '', ingreso:d.ingreso || null })));
+    await cargarTodo(); return { ok:true };
+  }),
+  eliminarItem: id => envolver(async () => { await escribir('DELETE', 'inventario?id=eq.' + id); await cargarTodo(); return { ok:true }; })
 };
 
 const opsLocal = {
-  async restaurar(){ const sid = ls.get(KS), u = sid && usr(sid); if (u) { S.user = u; return u; } return null; },
+  async restaurar(){ const sid = ls.get(KS), u = sid && usr(sid); if (u) { S.user = u; tareasDemo(); return u; } return null; },
   cargarPublico: async () => true,
-  refrescar: async () => {},
+  refrescar: async () => { tareasDemo(); },
   refrescarOcupacion: async () => {},
   async login(usuario, clave){
     const user = DB.usuarios.find(x => x.usuario === usuario);
     if (!(user && (await hash(user.usuario, clave)) === user.passHash)) return { error:'Usuario o contraseña incorrectos.' };
-    S.user = user; ls.set(KS, user.id); return { user };
+    S.user = user; ls.set(KS, user.id); tareasDemo(); return { user };
   },
   async salir(){ ls.del(KS); },
   async pedirTurno(d){
@@ -791,39 +1110,40 @@ const opsLocal = {
     const t = turno(id); if (!t) return { error:'El turno no existe.' };
     const valido = (t.estado === 'pendiente' && (estado === 'confirmado' || estado === 'rechazado')) || (t.estado === 'confirmado' && estado === 'realizado');
     if (!valido) return { error:'Ese cambio de estado no es válido.' };
-    t.estado = estado; save(); return { ok:true };
+    const antes = t.estado; t.estado = estado; avisosTurno(t, antes); save(); return { ok:true };
   },
   async crearPres(d){
-    const e = d.clienteId ? null : validarCodigo(d.codigo, d.telefono).error;
-    if (e) return { error:e };
+    if (!d.clienteId) {
+      const v = validarCodigo(d.codigo, d.telefono);
+      if (v.error) return { error:v.error };
+      if (v.ok && d.servicio !== 'Mudanza') return { error:'El código de referido vale solo para mudanzas.' };
+    }
     const p = crearPres(d);
     return { ok:true, pres:{ ...p, descuento:p.codigoRefId ? DB.config.descReferido : 0 } };
   },
-  async cotizar(id, monto, nota){
-    const p = pres(id); if (!p || !['pendiente','cotizado'].includes(p.estado)) return { error:'Ese cambio no es válido.' };
-    guardarCotizacion(p, monto, nota); return { ok:true };
+  async confirmar(id, monto, nota, hora){
+    const p = pres(id); if (!p || !['pendiente','cotizado'].includes(p.estado)) return { error:'Este presupuesto ya no se puede cotizar.' };
+    if (!(monto > 0)) return { error:'Cargá el precio base.' };
+    if (hora && !/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)) return { error:'La hora no es válida. Usá el formato 24 hs, por ejemplo 09:30.' };
+    confirmarLocal(p, monto, nota, hora); return { ok:true };
   },
   async responderPres(id, accion){
     const p = pres(id); if (!p || p.clienteId !== S.user.id) return { error:'No tenés permiso sobre este presupuesto.' };
     const map = { aceptar:['cotizado','aceptado'], rechazar:['cotizado','rechazado'], cancelar:['pendiente','cancelado'] };
     const m = map[accion]; if (!m || p.estado !== m[0]) return { error:'Ese cambio no es válido.' };
-    p.estado = m[1]; save(); return { ok:true };
+    setEstadoPres(p, m[1], false); save(); return { ok:true };
   },
   async estadoPres(id, estado){
     const p = pres(id); if (!p) return { error:'El presupuesto no existe.' };
     const desde = { aceptado:['cotizado'], rechazado:['pendiente','cotizado','aceptado'], realizado:['aceptado'] }[estado];
-    if (!desde || !desde.includes(p.estado)) return { error:'Ese cambio no es válido.' };
-    if (estado === 'realizado') {
-      const rf = p.codigoRefId && !p.recompensado ? usr(p.codigoRefId) : null;
-      marcarRealizado(p);
-      return { ok:true, referente:rf ? rf.nombre : null, suma:rf ? DB.config.descReferente : 0 };
-    }
-    p.estado = estado; save(); return { ok:true, suma:0 };
+    if (!desde || !desde.includes(p.estado)) return { error:'Ese cambio de estado no es válido.' };
+    if (estado === 'realizado') { const r = realizarLocal(p); return { ok:true, referente:r.referente, suma:r.suma }; }
+    setEstadoPres(p, estado, true); save(); return { ok:true, suma:0 };
   },
   async guardarCliente(d){
     if (!d.id && DB.usuarios.some(u => u.usuario === d.usuario)) return { error:'Ese usuario ya existe.' };
     let u = d.id ? usr(d.id) : null;
-    if (!u) { u = { id:'u-' + uid(), usuario:d.usuario, passHash:await hash(d.usuario, d.pass), rol:'cliente', nombre:d.nombre, telefono:d.telefono, codigo:generarCodigo(d.nombre), credito:0, unidadId:null }; DB.usuarios.push(u); }
+    if (!u) { u = { id:'u-' + uid(), usuario:d.usuario, passHash:await hash(d.usuario, d.pass), rol:'cliente', nombre:d.nombre, telefono:d.telefono, codigo:generarCodigo(d.nombre), avisos:{}, referidoPor:null, unidadId:null }; DB.usuarios.push(u); asegurarDescuento(u.id); }
     else { u.nombre = d.nombre; u.telefono = d.telefono; if (d.pass) u.passHash = await hash(u.usuario, d.pass); }
     if ((u.unidadId || null) !== d.unidadId) {
       const old = uni(u.unidadId); if (old) old.clienteId = null;
@@ -851,14 +1171,69 @@ const opsLocal = {
   async eliminarMiCuenta(clave){
     if ((await hash(S.user.usuario, clave)) !== S.user.passHash) return { error:'La contraseña no es correcta.' };
     quitarCliente(S.user.id, true); ls.del(KS); return { ok:true };
+  },
+  async registrar(d){
+    if (DB.usuarios.some(u => u.usuario === d.usuario)) return { error:'Ese usuario ya existe. Elegí otro.' };
+    const fin = digits(d.telefono).slice(-8);
+    if (DB.usuarios.some(u => u.rol === 'cliente' && digits(u.telefono).slice(-8) === fin)) return { error:'Ya hay una cuenta con ese teléfono. Si es tuya, ingresá con tu usuario.' };
+    let ref = null;
+    if (normCodigo(d.codigo)) { const v = validarCodigo(d.codigo, d.telefono); if (v.error) return { error:v.error }; ref = v.ref; }
+    const u = { id:'u-' + uid(), usuario:d.usuario, passHash:await hash(d.usuario, d.pass), rol:'cliente', nombre:d.nombre, telefono:d.telefono, codigo:generarCodigo(d.nombre), avisos:{}, referidoPor:ref ? ref.id : null, unidadId:null };
+    DB.usuarios.push(u); asegurarDescuento(u.id); save();
+    return { ok:true, referido:!!ref };
+  },
+  async marcarLeidos(ids){
+    const ahora = Date.now(); misAvisos().forEach(a => { if (!a.leido && (!ids || !ids.length || ids.includes(a.id))) a.leido = ahora; });
+    save(); return { ok:true };
+  },
+  async guardarPrefs(prefs){
+    const ok = esDueno() ? ['mud_nuevos','mud_recordatorios','gm_nuevos','gm_recordatorios'] : ['promos'];
+    Object.keys(prefs).forEach(k => { if (ok.includes(k)) S.user.avisos = { ...(S.user.avisos || {}), [k]:!!prefs[k] }; });
+    save(); return { ok:true };
+  },
+  async guardarItem(d){
+    const e = errItem(d); if (e) return { error:e };
+    if (d.id) {
+      const i = DB.inventario.find(x => x.id === d.id); if (!i) return { error:'Ese ítem ya no existe.' };
+      Object.assign(i, { nombre:d.nombre, cantidad:d.cantidad, condicion:d.condicion, nota:d.nota || '', ingreso:d.ingreso || '', actualizado:Date.now() });
+      avisarInventario(i.clienteId);
+    } else {
+      if (!usr(d.clienteId) || usr(d.clienteId).rol !== 'cliente') return { error:'El cliente no existe.' };
+      if (itemsDe(d.clienteId).length >= 500) return { error:'Se llegó al máximo de 500 ítems por cliente.' };
+      DB.inventario.push({ id:uid(), clienteId:d.clienteId, nombre:d.nombre, cantidad:d.cantidad, condicion:d.condicion, nota:d.nota || '', ingreso:d.ingreso || '', actualizado:Date.now() });
+      avisarInventario(d.clienteId);
+    }
+    save(); return { ok:true };
+  },
+  async guardarItems(lista){
+    if (!lista.length) return { ok:true };
+    const cid = lista[0].clienteId;
+    if (itemsDe(cid).length + lista.length > 500) return { error:'Se llegó al máximo de 500 ítems por cliente.' };
+    for (const d of lista) { const e = errItem(d); if (e) return { error:e }; }
+    lista.forEach(d => DB.inventario.push({ id:uid(), clienteId:cid, nombre:d.nombre, cantidad:d.cantidad, condicion:d.condicion || 'Bueno', nota:d.nota || '', ingreso:d.ingreso || '', actualizado:Date.now() }));
+    avisarInventario(cid); save(); return { ok:true };
+  },
+  async eliminarItem(id){
+    const i = DB.inventario.find(x => x.id === id); if (!i) return { ok:true };
+    DB.inventario = DB.inventario.filter(x => x.id !== id); avisarInventario(i.clienteId); save(); return { ok:true };
   }
 };
+function errItem(d){
+  if (!d.nombre || d.nombre.trim().length < 1 || d.nombre.length > 120) return 'Escribí qué es (hasta 120 letras).';
+  if (!Number.isInteger(d.cantidad) || d.cantidad < 1 || d.cantidad > 9999) return 'La cantidad es un número entre 1 y 9999.';
+  if (!CONDICIONES.includes(d.condicion || 'Bueno')) return 'Elegí una condición de la lista.';
+  if ((d.nota || '').length > 300) return 'El comentario puede tener hasta 300 letras.';
+  return '';
+}
 // anonimizar: al borrar su propia cuenta, los pedidos del cliente dejan de mostrar sus datos personales
 function quitarCliente(id, anonimizar){
   const c = usr(id); if (!c || c.rol !== 'cliente') return;
   DB.turnos.forEach(t => { if (t.clienteId === id && activo(t)) { t.estado = 'cancelado'; t.canceladoPor = 'dueno'; } });
   DB.unidades.forEach(u => { if (u.clienteId === id) u.clienteId = null; });
   DB.presupuestos.forEach(p => { if (p.clienteId === id) { p.clienteId = null; if (anonimizar) { p.nombre = 'Cliente eliminado'; p.telefono = ''; p.origen = ''; p.destino = ''; p.detalle = ''; } } });
+  DB.usuarios.forEach(u => { if (u.referidoPor === id) u.referidoPor = null; });
+  DB.avisos = DB.avisos.filter(a => a.usuarioId !== id); DB.mensuales = DB.mensuales.filter(m => m.clienteId !== id);
+  DB.creditos = DB.creditos.filter(x => x.clienteId !== id); DB.inventario = DB.inventario.filter(i => i.clienteId !== id);
   DB.usuarios = DB.usuarios.filter(u => u.id !== id); save();
 }
 const ops = NUBE ? opsNube : opsLocal;
@@ -881,13 +1256,21 @@ const ICONS = {
   check:'<path d="M5 12.5l4.5 4.5L19 7"/>',
   copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/>',
   chat:'<path d="M4 5h16v11H9l-5 4z"/>',
-  user:'<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>'
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>',
+  bell:'<path d="M6 17v-6a6 6 0 1112 0v6l1.5 2h-15z"/><path d="M10 21h4"/>',
+  list:'<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01" stroke-width="3"/>',
+  share:'<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>',
+  edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  search:'<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>'
 };
+// Logo de WhatsApp (archivo oficial entregado por el cliente), para los botones que abren WhatsApp
+const icWA = () => `<img class="ic wa" src="data:image/png;base64,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" alt="" width="20" height="20" aria-hidden="true">`;
 const ic = n => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
 const marcaHTML = () => `<span class="mark"><img src="${LOGO}" alt="PG" width="41" height="44" decoding="async"></span><span class="word">Logística</span>`;
 
 const BT = { pendiente:['Por confirmar','warn'], confirmado:['Confirmado','ok'], cancelado:['Cancelado',''], rechazado:['No disponible','bad'], realizado:['Realizado','acc'] };
 const BP = { pendiente:['Pendiente','warn'], cotizado:['Cotizado','acc'], aceptado:['Aceptado','ok'], realizado:['Realizado','ok'], rechazado:['Rechazado','bad'], cancelado:['Cancelado',''] };
+const BD = { disponible:['Disponible','ok'], reservado:['En un presupuesto','acc'], usado:['Usado',''], vencido:['Vencido','warn'] };
 const badge = (map, e) => `<span class="badge ${map[e][1]}">${map[e][0]}</span>`;
 
 /* ---------- tema ---------- */
@@ -935,11 +1318,11 @@ function vLogin(){
     <section class="login-hero gut">
       <div class="brand">${marcaHTML()}</div>
       <h1>Tu guardamueble, con turno y sin vueltas.</h1>
-      <p>Pedí turno para ir a tus cosas, consultá presupuestos de mudanza o de movimiento de maquinaria y ahorrá recomendando a otros.</p>
+      <p>Pedí turno para ir a tus cosas, recibí tus presupuestos en la app, consultá tu inventario y aprovechá descuentos todos los meses.</p>
       <ul class="hero-points">
         <li>${ic('calendar')}Turnos online, con cita previa</li>
-        <li>${ic('quote')}Presupuestos de mudanzas y maquinarias</li>
-        <li>${ic('gift')}Descuentos por recomendar</li>
+        <li>${ic('quote')}Presupuestos en tu cuenta, con aviso</li>
+        <li>${ic('gift')}Descuentos del mes y por recomendar</li>
       </ul>
     </section>
     <section class="login-card gut">
@@ -950,8 +1333,9 @@ function vLogin(){
         <p class="msg bad" id="lerr" role="alert" hidden></p>
         <button class="btn primary block" type="submit">Ingresar</button>
       </form>
-      <div class="sep"><span>¿Todavía no sos cliente?</span></div>
-      <button class="btn sec block" data-act="pub-abrir">Pedir un presupuesto</button>
+      <div class="sep"><span>¿Todavía no tenés cuenta?</span></div>
+      <button class="btn primary block" data-act="cuenta-nueva">Crear mi cuenta</button>
+      <button class="btn sec block" data-act="pub-abrir">Pedir un presupuesto sin cuenta</button>
       ${DEMO ? `<details class="demo"><summary>Cuentas de prueba</summary><div class="demo-list">
         <button type="button" data-act="demo" data-u="admin" data-p="pg2026"><span>Dueño</span><span>admin · pg2026</span></button>
         <button type="button" data-act="demo" data-u="maria" data-p="1234"><span>Cliente María</span><span>maria · 1234</span></button>
@@ -964,13 +1348,15 @@ function vLogin(){
 
 /* ---------- estructura con navegación ---------- */
 function shell(inner){
-  const du = esDueno(), tema = temaEfectivo();
+  const du = esDueno(), tema = temaEfectivo(), nAv = avisosSinLeer();
   const items = du
-    ? [['resumen','Resumen','home'],['turnos','Turnos','calendar'],['presupuestos','Presupuestos','quote'],['unidades','Guardamuebles','box','Unidades'],['referidos','Referidos','gift']]
-    : [['inicio','Inicio','home'],['turnos','Turnos','calendar'],['presupuestos','Presupuestos','quote'],['referidos','Referidos','gift']];
+    ? [['resumen','Resumen','home'],['turnos','Turnos','calendar'],['presupuestos','Presupuestos','quote'],['unidades','Guardamuebles','box','Unidades'],['referidos','Descuentos','gift']]
+    : [['inicio','Inicio','home'],['turnos','Turnos','calendar'],['presupuestos','Presupuestos','quote'],['inventario','Inventario','list'],['referidos','Descuentos','gift']];
+  const activa = du && S.view === 'inventario' ? 'unidades' : S.view;
   return `<header class="top gut"><div class="top-in">
       <div class="brand">${marcaHTML()}</div>
       <span class="who">${esc(S.user.nombre)}</span>
+      <button class="icon-btn bell" data-act="ir" data-v="avisos" aria-label="Avisos${nAv ? ', ' + nAv + ' sin leer' : ''}" title="Avisos">${ic('bell')}${nAv ? `<span class="dot" id="bell-n">${nAv > 9 ? '9+' : nAv}</span>` : ''}</button>
       <button class="icon-btn" data-act="tema" aria-label="Cambiar a modo ${tema === 'dark' ? 'claro' : 'oscuro'}" title="Modo ${tema === 'dark' ? 'claro' : 'oscuro'}">${ic(tema === 'dark' ? 'sun' : 'moon')}</button>
       ${du ? `<button class="icon-btn" data-act="ir" data-v="ajustes" aria-label="Ajustes" title="Ajustes">${ic('sliders')}</button>`
            : `<button class="icon-btn" data-act="cuenta" aria-label="Mi cuenta" title="Mi cuenta">${ic('user')}</button>`}
@@ -978,7 +1364,7 @@ function shell(inner){
     </div></header>
     <div class="layout gut">
       <nav class="nav" aria-label="Secciones"><div class="nav-in">${items.map(([v,l,i,sh]) =>
-        `<button data-act="ir" data-v="${v}" aria-label="${l}" ${S.view === v ? 'aria-current="page"' : ''}>${ic(i)}${sh ? `<span class="lg">${l}</span><span class="sh">${sh}</span>` : `<span>${l}</span>`}</button>`).join('')}</div></nav>
+        `<button data-act="ir" data-v="${v}" aria-label="${l}" ${activa === v ? 'aria-current="page"' : ''}>${ic(i)}${sh ? `<span class="lg">${l}</span><span class="sh">${sh}</span>` : `<span>${l}</span>`}</button>`).join('')}</div></nav>
       <main class="main" id="main">${inner}</main>
     </div>`;
 }
@@ -1010,7 +1396,7 @@ function agrupar(lista, modo){
   return out + '</ul>';
 }
 function presRow(p){
-  const total = p.monto > 0 ? totalDe(p.monto, p.descRef, p.descCred) : 0;
+  const total = totalPres(p);
   return `<li><button class="row" data-act="pres-ver" data-id="${p.id}">
     <div class="dt off"><small>Nº</small><b>${p.num}</b></div>
     <div class="grow"><div class="t-main">${esc(p.servicio)} · ${esc(p.nombre)}</div>
@@ -1020,10 +1406,34 @@ function presRow(p){
 }
 const vacio = (t, s, btn='') => `<div class="empty"><b>${t}</b><span>${s}</span>${btn}</div>`;
 
+/* ---------- descuentos: bloques que se repiten ---------- */
+function resumenDesc(u, propio = true){
+  const cfg = DB.config, m = mensualDe(u.id), libre = creditoLibre(u.id), activo_ = creditoActivo(u.id);
+  const em = m ? estadoMensual(m) : null;
+  const mudanza = Math.min(libre, cfg.tope) + (m && em === 'disponible' && m.tipo === 'mudanza' ? m.pct : 0);
+  const filaM = m ? `<div class="disc-row"><div class="pctbig tnum">${m.pct}%</div><div class="grow"><div class="t-main">Del mes · en ${TIPO_TXT[m.tipo]}</div>
+      <div class="t-sub">${em === 'disponible' ? `Disponible hasta el ${ddmm(finDeMes(m.mes))}` : em === 'reservado' ? `Ya está en uno de ${propio ? 'tus' : 'sus'} presupuestos` : em === 'usado' ? `Ya lo ${propio ? 'usaste' : 'usó'}` : 'Venció'}</div></div>${badge(BD, em)}</div>`
+    : `<div class="disc-row"><div class="pctbig tnum">—</div><div class="grow"><div class="t-main">Del mes</div><div class="t-sub">Se sortea el primer día de cada mes.</div></div></div>`;
+  const filaR = `<div class="disc-row"><div class="pctbig tnum">${libre}%</div><div class="grow"><div class="t-main">Por referidos · en mudanzas</div>
+      <div class="t-sub">${libre ? 'Disponible' + (cfg.vencReferidosMeses ? ` (vencen a los ${cfg.vencReferidosMeses} ${cfg.vencReferidosMeses === 1 ? 'mes' : 'meses'})` : '') : `${propio ? 'Sumás' : 'Suma'} ${cfg.descReferente}% por cada referido que contrata`}</div></div>${libre ? badge(BD, 'disponible') : ''}</div>`;
+  const bar = `<div class="bar" role="img" aria-label="${activo_}% de ${cfg.tope}% posible por referidos"><i style="width:${Math.min(100, activo_ / Math.max(1, cfg.tope) * 100)}%"></i></div>`;
+  const suma = mudanza > 0 ? `<p class="msg ok">En ${propio ? 'tu' : 'su'} próxima mudanza se suman: <b>${mudanza}%</b> de descuento.</p>` : '';
+  return `<div class="disc-list">${filaM}${filaR}</div>${bar}<p class="hint">Por referidos ${propio ? 'podés llegar' : 'puede llegar'} hasta ${cfg.tope}%. Los descuentos se suman, se aplican solos al confirmar el presupuesto y cada uno se usa una sola vez.</p>${suma}`;
+}
+const registroHTML = filas => filas.length ? `<ul class="list">${filas.map(f => {
+    const pr = f.presId && pres(f.presId);
+    return `<li><div class="row"><div class="dt ${f.estado === 'disponible' || f.estado === 'reservado' ? '' : 'off'}"><small>Desc.</small><b>${f.pct}%</b></div>
+      <div class="grow"><div class="t-main">${esc(f.titulo)}</div><div class="t-sub">${esc(f.sub)}</div><div class="t-note">${esc(f.fecha)}${pr ? ' · ' + nPres(pr) : ''}</div></div>
+      <div class="side">${badge(BD, f.estado)}</div></div></li>`; }).join('')}</ul>`
+  : vacio('Todavía no hay descuentos', 'Acá queda el registro de los disponibles, usados y vencidos.');
+
 /* ---------- inicio del cliente ---------- */
 function vInicio(){
   const u = S.user, un = uni(u.unidadId), cfg = DB.config;
   const prox = misTurnos().filter(t => activo(t) && futuro(t)).sort(porFecha)[0];
+  const paraResponder = misPres().filter(p => p.estado === 'cotizado').sort((a, b) => b.creado - a.creado);
+  const nItems = itemsDe(u.id).length;
+  const pr = paraResponder[0];
   return `<div class="pagehead"><div><h1 class="h1">Hola, ${esc(primerNombre(u.nombre))}</h1></div></div>
   <section class="hero-card">
     ${un ? `<div class="eyebrow">Tu guardamueble</div><div class="big">${esc(un.nombre)}</div>
@@ -1034,21 +1444,20 @@ function vInicio(){
       <button class="btn glass" data-act="m-pres">${ic('quote')}Pedir presupuesto</button>
     </div>
   </section>
+  ${pr ? `<section class="card alert-card"><div class="sec-h"><div><h2 class="h2">${paraResponder.length === 1 ? 'Tenés un presupuesto para responder' : `Tenés ${paraResponder.length} presupuestos para responder`}</h2>
+      <p class="sub">${nPres(pr)} · ${esc(pr.servicio)} · total ${money(totalPres(pr))}</p></div><button class="btn primary" data-act="pres-ver" data-id="${pr.id}">Ver presupuesto</button></div></section>` : ''}
   <div class="cols">
     <section class="card"><h2 class="h2">Próximo turno</h2>
       ${prox ? `<ul class="list compact" style="margin:12px -18px -18px">${turnoRow(prox, 'cliente')}</ul>`
         : `<p class="sub">No tenés turnos pendientes. Para ir a tu guardamueble hace falta cita previa.</p><div style="margin-top:12px"><button class="btn soft" data-act="m-turno" ${un ? '' : 'disabled'}>Pedir turno</button></div>`}
     </section>
-    <section class="card"><h2 class="h2">Tu descuento por referidos</h2>
-      ${u.credito > 0
-        ? `<div class="big-credit tnum">${u.credito}%</div><p class="sub">Acumulado. Se aplica en tu próxima cotización.</p>
-           <div class="bar" role="img" aria-label="${u.credito}% de ${cfg.tope}% posible"><i style="width:${Math.min(100, u.credito / cfg.tope * 100)}%"></i></div>
-           <p class="hint">Podés llegar hasta ${cfg.tope}%.</p>`
-        : `<p class="sub">Recomendá PG Logística y sumá <b>${cfg.descReferente}%</b> de descuento por cada persona que contrate con tu código.</p>`}
-      <div style="margin-top:12px"><button class="btn soft" data-act="ir" data-v="referidos">Ver mi código</button></div>
+    <section class="card"><h2 class="h2">Tus descuentos</h2>
+      ${resumenDesc(u)}
+      <div style="margin-top:12px"><button class="btn soft" data-act="ir" data-v="referidos">Ver mis descuentos y mi código</button></div>
     </section>
   </div>
-  ${DB.config.whatsapp ? `<a class="btn sec" href="${waLink(DB.config.whatsapp, 'Hola PG Logística, soy ' + u.nombre + '.')}" target="_blank" rel="noopener">${ic('chat')}Escribir por WhatsApp</a>` : ''}`;
+  ${un ? `<section class="card"><div class="sec-h"><div><h2 class="h2">Tu inventario</h2><p class="sub">${nItems ? `${nItems} ${nItems === 1 ? 'ítem guardado' : 'ítems guardados'} en ${esc(un.nombre)}.` : 'Todavía no cargamos tus pertenencias.'}</p></div><button class="btn soft" data-act="ir" data-v="inventario">Ver inventario</button></div></section>` : ''}
+  ${DB.config.whatsapp ? `<a class="btn sec" href="${waLink(DB.config.whatsapp, 'Hola PG Logística, soy ' + u.nombre + '.')}" target="_blank" rel="noopener">${icWA()}Escribir por WhatsApp</a>` : ''}`;
 }
 
 /* ---------- resumen del dueño ---------- */
@@ -1114,9 +1523,8 @@ function vPresD(){
 }
 function vPresC(){
   const l = misPres().sort((a,b) => b.creado - a.creado);
-  return `<div class="pagehead"><div><h1 class="h1">Presupuestos</h1><p class="sub">Mudanzas, maquinarias, fletes y más.</p></div>
+  return `<div class="pagehead"><div><h1 class="h1">Presupuestos</h1><p class="sub">Los que te enviamos quedan guardados acá, con sus descuentos.</p></div>
       <button class="btn primary" data-act="m-pres">${ic('plus')}Pedir presupuesto</button></div>
-    ${S.user.credito > 0 ? `<div class="msg ok">Tenés ${S.user.credito}% de descuento acumulado por referidos. Se aplica cuando te coticemos.</div>` : ''}
     <section class="card flush">${l.length ? `<ul class="list">${l.map(presRow).join('')}</ul>` : vacio('Todavía no pediste presupuestos', 'Contanos qué necesitás mover y te respondemos.', `<button class="btn soft" data-act="m-pres">Pedir presupuesto</button>`)}</section>`;
 }
 function formPresHTML(pub){
@@ -1135,17 +1543,18 @@ function formPresHTML(pub){
       <div class="field"><label for="pd">Dirección de destino</label><input class="in" id="pd" placeholder="Barrio o calle, piso, ascensor"></div>
     </div>
     <div class="field"><label for="pe">Qué hay que mover</label><textarea class="in" id="pe" placeholder="Ambientes, cantidad de bultos, muebles grandes. Para maquinaria: tipo de equipo, peso aproximado y accesos."></textarea></div>
-    ${pub ? `<div class="field"><label for="pc">Código de referido (opcional)</label><input class="in" id="pc" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="PG-NOMBRE00"><div id="pc-msg" class="hint">Si te recomendó un cliente, cargá su código y obtené ${cfg.descReferido}% de descuento.</div></div>`
-      : (u.credito > 0 ? `<p class="msg ok">Se aplica tu descuento acumulado de ${u.credito}% al cotizar.</p>` : '')}
+    ${pub ? `<div class="field"><label for="pc">Código de referido (opcional)</label><input class="in" id="pc" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="PG-NOMBRE00"><div id="pc-msg" class="hint">Si te recomendó un cliente, cargá su código y obtené ${cfg.descReferido}% de descuento en tu mudanza.</div></div>`
+      : `<p class="msg ok">Tus descuentos disponibles (del mes y por referidos) se aplican solos cuando confirmemos tu presupuesto.</p>`}
     <p class="msg bad" id="m-err" role="alert" hidden></p>
     <div class="actions">${pub ? '' : `<button type="button" class="btn sec" data-act="cerrar">Cancelar</button>`}<button class="btn primary ${pub ? 'block' : ''}" type="submit">Enviar pedido</button></div>
   </form>`;
 }
-function bloqueTotal(monto, ref, cred){
+function bloqueTotal(monto, d){
+  const c = calc(monto, d);
   return `<div class="sum"><div><span>Precio base</span><span>${money(monto)}</span></div>
-    ${ref ? `<div class="disc"><span>Código de referido (${ref}%)</span><span>−${money(dctoDe(monto, ref))}</span></div>` : ''}
-    ${cred ? `<div class="disc"><span>Descuento acumulado (${cred}%)</span><span>−${money(dctoDe(monto, cred))}</span></div>` : ''}
-    <div class="total"><span>Total</span><span>${money(totalDe(monto, ref, cred))}</span></div></div>`;
+    ${c.filas.map(f => `<div class="disc"><span>${f.txt}</span><span>−${money(f.imp)}</span></div>`).join('')}
+    <div class="total"><span>Total</span><span>${money(c.total)}</span></div></div>
+    ${c.filas.length ? `<p class="saving">Ahorrás ${money(c.ahorro)} (${c.pct}% sobre el precio base)</p>` : ''}`;
 }
 
 /* ---------- guardamuebles (dueño) ---------- */
@@ -1159,7 +1568,7 @@ function vUnidades(){
         const c = un.clienteId ? usr(un.clienteId) : null;
         return `<article class="unit ${c ? '' : 'free'}"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div class="nm">${esc(un.nombre)}</div>${c ? '<span class="badge acc">Ocupado</span>' : '<span class="badge">Libre</span>'}</div>
           <div class="who2">${un.m2} m²${c ? ' · ' + esc(c.nombre) + (c.telefono ? ' · ' + esc(c.telefono) : '') : ''}</div>
-          <div class="ops">${c ? `<button class="btn soft sm" data-act="m-cliente" data-id="${c.id}">Ver cliente</button>` : `<button class="btn soft sm" data-act="m-cliente" data-unidad="${un.id}">Asignar cliente nuevo</button>`}
+          <div class="ops">${c ? `<button class="btn soft sm" data-act="m-cliente" data-id="${c.id}">Ver cliente</button><button class="btn soft sm" data-act="inv-de" data-id="${c.id}">${ic('list')}Inventario</button>` : `<button class="btn soft sm" data-act="m-cliente" data-unidad="${un.id}">Asignar cliente nuevo</button>`}
           <button class="btn sec sm" data-act="m-unidad" data-id="${un.id}">Editar</button></div></article>`; }).join('')}</div></section>`).join('')
       : `<section class="card">${vacio('Todavía no cargaste guardamuebles', 'Creá el primero y después asignale un cliente.', `<button class="btn primary" data-act="m-unidad">Crear guardamueble</button>`)}</section>`}`;
 }
@@ -1173,51 +1582,144 @@ function estadoRef(p){
 function vRefC(){
   const u = S.user, cfg = DB.config, lista = refsDe(u.id);
   const url = /^https?:/.test(location.href) ? location.href.split('#')[0] : '';
-  const msg = `Hola! Pedí tu presupuesto en PG Logística con mi código ${u.codigo} y tenés ${cfg.descReferido}% de descuento.${url ? ' ' + url : ''}`;
-  return `<div class="pagehead"><div><h1 class="h1">Referidos</h1><p class="sub">Recomendá y ahorrá en tu próximo servicio.</p></div></div>
-    <div class="code-card"><div class="eyebrow">Tu código</div><div class="code" id="mi-codigo">${esc(u.codigo)}</div>
+  const msg = `Hola! Pedí tu presupuesto en PG Logística con mi código ${u.codigo} y tenés ${cfg.descReferido}% de descuento en tu mudanza.${url ? ' ' + url : ''}`;
+  return `<div class="pagehead"><div><h1 class="h1">Descuentos</h1><p class="sub">Los del mes, los que sumás por recomendar y tu código.</p></div></div>
+    <section class="card"><h2 class="h2">Disponibles ahora</h2>${resumenDesc(u)}</section>
+    <div class="code-card"><div class="eyebrow">Tu código para recomendar</div><div class="code" id="mi-codigo">${esc(u.codigo)}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-act="copiar" data-t="${esc(u.codigo)}">${ic('copy')}Copiar código</button>
-      <a class="btn sec" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">${ic('chat')}Compartir por WhatsApp</a></div></div>
+      <a class="btn sec" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">${icWA()}Compartir por WhatsApp</a></div></div>
     <div class="cols">
       <section class="card"><h2 class="h2">Cómo funciona</h2>
         <ol class="steps">
           <li><span>Compartí tu código con quien necesite una mudanza, un flete o dónde guardar sus cosas.</span></li>
-          <li><span>Tu referido lo carga al pedir presupuesto y obtiene <b>${cfg.descReferido}% de descuento</b>.</span></li>
-          <li><span>Cuando contrata, vos sumás <b>${cfg.descReferente}% de descuento</b> para tu próximo servicio. Se acumula hasta ${cfg.tope}%.</span></li>
+          <li><span>Tu referido lo carga al crear su cuenta o al pedir presupuesto y obtiene <b>${cfg.descReferido}% de descuento</b> en su primera mudanza.</span></li>
+          <li><span>Cuando contrata, vos sumás <b>${cfg.descReferente}% de descuento</b> para tu próxima mudanza. Se acumula hasta ${cfg.tope}% y se suma al descuento del mes.</span></li>
         </ol></section>
-      <section class="card"><h2 class="h2">Tu descuento acumulado</h2>
-        <div class="big-credit tnum">${u.credito || 0}%</div>
-        <div class="bar" role="img" aria-label="${u.credito || 0}% de ${cfg.tope}% posible"><i style="width:${Math.min(100, (u.credito || 0) / cfg.tope * 100)}%"></i></div>
-        <p class="hint">Máximo ${cfg.tope}%. Se descuenta cuando se realiza tu próximo servicio.</p></section>
+      <section class="card flush"><div style="padding:16px"><h2 class="h2">Tus referidos</h2></div>
+        ${lista.length ? `<ul class="list" style="border-top:1px solid var(--line)">${lista.map(p => `<li><div class="row"><div class="dt off"><small>Nº</small><b>${p.num}</b></div><div class="grow"><div class="t-main">${esc(iniciales(p.nombre))}</div><div class="t-sub">${esc(p.servicio)} · ${fmtCorto(isoDate(new Date(p.creado)))}</div></div><div class="side">${estadoRef(p)}</div></div></li>`).join('')}</ul>`
+          : vacio('Todavía no usaron tu código', 'Cuando alguien lo cargue en un pedido, aparece acá.')}</section>
     </div>
-    <section class="card flush"><div style="padding:16px"><h2 class="h2">Tus referidos</h2></div>
-      ${lista.length ? `<ul class="list" style="border-top:1px solid var(--line)">${lista.map(p => `<li><div class="row"><div class="dt off"><small>Nº</small><b>${p.num}</b></div><div class="grow"><div class="t-main">${esc(iniciales(p.nombre))}</div><div class="t-sub">${esc(p.servicio)} · ${fmtCorto(isoDate(new Date(p.creado)))}</div></div><div class="side">${estadoRef(p)}</div></div></li>`).join('')}</ul>`
-        : vacio('Todavía no usaron tu código', 'Cuando alguien lo cargue en un pedido, aparece acá.')}</section>`;
+    <section class="card flush"><div style="padding:16px"><h2 class="h2">Registro de descuentos</h2><p class="sub" style="margin-top:4px">Disponibles, usados y vencidos.</p></div>
+      <div style="border-top:1px solid var(--line)">${registroHTML(registroDe(u.id))}</div></section>`;
 }
 function vRefD(){
   const cfg = DB.config, refs = DB.presupuestos.filter(p => p.codigoRefId).sort((a,b) => b.creado - a.creado);
+  const mes = mesActualISO(), delMes = DB.mensuales.filter(m => m.mes === mes);
   const filas = clientes().map(c => {
-    const mios = refs.filter(p => p.codigoRefId === c.id);
-    return { c, n: mios.length, ok: mios.filter(p => p.estado === 'realizado').length };
+    const mios = refs.filter(p => p.codigoRefId === c.id), m = mensualDe(c.id);
+    return { c, n: mios.length, ok: mios.filter(p => p.estado === 'realizado').length, libre: creditoLibre(c.id), m };
   });
-  return `<div class="pagehead"><div><h1 class="h1">Referidos</h1><p class="sub">Descuentos por recomendar el servicio.</p></div></div>
-    <section class="card"><h2 class="h2">Descuentos</h2>
+  return `<div class="pagehead"><div><h1 class="h1">Descuentos</h1><p class="sub">Referidos, descuentos del mes y el registro de cada cliente.</p></div></div>
+    <section class="card"><h2 class="h2">Descuentos por referidos</h2>
       <form class="form" data-form="cfgDesc" novalidate>
         <div class="g2">
           <div class="field"><label for="c-ref">Para quien recomienda (%)</label><input class="in" id="c-ref" inputmode="numeric" value="${cfg.descReferente}"><span class="hint">Por cada referido que contrate.</span></div>
-          <div class="field"><label for="c-rid">Para el referido (%)</label><input class="in" id="c-rid" inputmode="numeric" value="${cfg.descReferido}"><span class="hint">En su primer servicio.</span></div>
-          <div class="field"><label for="c-top">Tope acumulable (%)</label><input class="in" id="c-top" inputmode="numeric" value="${cfg.tope}"><span class="hint">Máximo por servicio.</span></div>
+          <div class="field"><label for="c-rid">Para el referido (%)</label><input class="in" id="c-rid" inputmode="numeric" value="${cfg.descReferido}"><span class="hint">En su primera mudanza.</span></div>
+          <div class="field"><label for="c-top">Tope acumulable (%)</label><input class="in" id="c-top" inputmode="numeric" value="${cfg.tope}"><span class="hint">Máximo por mudanza.</span></div>
+          <div class="field"><label for="c-ven">Vencen a los (meses)</label><input class="in" id="c-ven" inputmode="numeric" value="${cfg.vencReferidosMeses}"><span class="hint">0 = no vencen. Rige para los que se sumen desde ahora.</span></div>
         </div>
         <p class="msg bad" id="m-err" role="alert" hidden></p>
         <div class="actions"><button class="btn primary" type="submit">Guardar descuentos</button></div>
       </form></section>
-    <section class="card flush"><div style="padding:16px"><h2 class="h2">Clientes y sus códigos</h2></div>
-      <div class="tbl"><table><thead><tr><th>Cliente</th><th>Código</th><th>Referidos</th><th>Contrataron</th><th>Descuento actual</th></tr></thead><tbody>
-      ${filas.length ? filas.map(f => `<tr><td>${esc(f.c.nombre)}</td><td><span class="tag">${esc(f.c.codigo)}</span></td><td>${f.n}</td><td>${f.ok}</td><td>${f.c.credito || 0}%</td></tr>`).join('') : '<tr><td colspan="5">Todavía no hay clientes.</td></tr>'}
+    <section class="card"><h2 class="h2">Descuento del mes</h2>
+      <p class="sub">El día 1 de cada mes cada cliente recibe uno al azar: 2, 3, 4 o 5%, en mudanzas o en guardamuebles. Dura hasta fin de mes, se usa una sola vez y se aplica solo al confirmar el presupuesto.</p>
+      <div class="kpis" style="margin-top:12px">
+        <div class="kpi"><b>${delMes.length}</b><span>Sorteados en ${fmtMes(mes)}</span></div>
+        <div class="kpi"><b>${delMes.filter(m => m.estado === 'disponible').length}</b><span>Disponibles</span></div>
+        <div class="kpi"><b>${delMes.filter(m => m.estado === 'reservado').length}</b><span>En un presupuesto</span></div>
+        <div class="kpi"><b>${delMes.filter(m => m.estado === 'usado').length}</b><span>Usados</span></div>
+      </div></section>
+    <section class="card flush"><div style="padding:16px"><h2 class="h2">Clientes y sus descuentos</h2></div>
+      <div class="tbl"><table><thead><tr><th>Cliente</th><th>Código</th><th>Referidos</th><th>Contrataron</th><th>Por referidos</th><th>Del mes</th><th></th></tr></thead><tbody>
+      ${filas.length ? filas.map(f => `<tr><td>${esc(f.c.nombre)}</td><td><span class="tag">${esc(f.c.codigo)}</span></td><td>${f.n}</td><td>${f.ok}</td><td>${f.libre}%</td><td>${f.m ? `${f.m.pct}% ${TIPO_TXT[f.m.tipo]} · ${BD[estadoMensual(f.m)][0].toLowerCase()}` : '—'}</td><td><button class="btn soft sm" data-act="m-desc" data-id="${f.c.id}">Registro</button></td></tr>`).join('') : '<tr><td colspan="7">Todavía no hay clientes.</td></tr>'}
       </tbody></table></div></section>
     <section class="card flush"><div style="padding:16px"><h2 class="h2">Pedidos con código</h2></div>
       ${refs.length ? `<ul class="list" style="border-top:1px solid var(--line)">${refs.map(p => `<li><button class="row" data-act="pres-ver" data-id="${p.id}"><div class="dt off"><small>Nº</small><b>${p.num}</b></div><div class="grow"><div class="t-main">${esc(p.nombre)}</div><div class="t-sub">Lo recomendó ${esc(nombreCliente(p.codigoRefId))} · ${esc(p.servicio)}</div></div><div class="side">${estadoRef(p)}</div></button></li>`).join('')}</ul>`
         : vacio('Todavía no hay pedidos con código', 'Aparecen cuando alguien carga un código en su presupuesto.')}</section>`;
+}
+
+/* ---------- avisos ---------- */
+function iconoAviso(tipo){
+  if (/promo|referido/.test(tipo)) return 'gift';
+  if (/presupuesto|mudanza/.test(tipo)) return 'quote';
+  if (/turno/.test(tipo)) return 'calendar';
+  return tipo === 'inventario' ? 'list' : 'bell';
+}
+function tiempoRel(ms){
+  const m = Math.round((Date.now() - ms) / 60000);
+  if (m < 1) return 'ahora'; if (m < 60) return `hace ${m} min`;
+  const h = Math.round(m / 60); if (h < 24) return `hace ${h} h`;
+  const d = Math.round(h / 24); if (d === 1) return 'ayer'; if (d < 7) return `hace ${d} días`;
+  return fmtCorto(isoDate(new Date(ms)));
+}
+function prefsAvisosHTML(){
+  const a = S.user.avisos || {}, on = k => a[k] !== false;
+  const sw = (k, t, sub) => `<label class="sw"><input type="checkbox" data-pref="${k}" ${on(k) ? 'checked' : ''}><span class="sw-t"><b>${t}</b><small>${sub}</small></span></label>`;
+  if (esDueno()) return `<section class="card"><h2 class="h2">Qué avisos quiero recibir</h2>
+    <p class="sub">Elegí de qué sectores querés recibir avisos. Hoy la elección vale para toda la cuenta de administración.</p>
+    <div class="sw-group"><div class="eyebrow">Mudanzas, maquinaria y otros servicios</div>
+      ${sw('mud_nuevos', 'Pedidos de presupuesto y respuestas', 'Cuando entra un pedido nuevo o un cliente acepta, rechaza o cancela.')}
+      ${sw('mud_recordatorios', 'Recordatorios de servicios agendados', 'Unas horas antes de cada mudanza o servicio aceptado.')}</div>
+    <div class="sw-group"><div class="eyebrow">Guardamuebles</div>
+      ${sw('gm_nuevos', 'Turnos y pedidos nuevos', 'Turnos por confirmar o cancelados, y pedidos de guardamuebles nuevos.')}
+      ${sw('gm_recordatorios', 'Recordatorios de turnos', 'Unas horas antes de cada turno confirmado.')}</div></section>`;
+  return `<section class="card"><h2 class="h2">Qué avisos quiero recibir</h2>
+    ${sw('promos', 'Promociones y descuentos', 'Tu descuento del mes y un resumen semanal. Los avisos de tus turnos y presupuestos siempre te llegan.')}</section>`;
+}
+function vAvisos(){
+  const l = misAvisos(), nuevos = S.sinLeer || new Set();
+  return `<div class="pagehead"><div><h1 class="h1">Avisos</h1><p class="sub">${esDueno() ? 'Pedidos, turnos y recordatorios.' : 'Novedades de tus turnos, presupuestos y descuentos.'}</p></div></div>
+    <section class="card flush">${l.length ? `<ul class="list">${l.map(a => `<li><button class="row aviso ${nuevos.has(a.id) ? 'nuevo' : ''}" data-act="aviso-ir" data-id="${a.id}">
+        <div class="av-ic">${ic(iconoAviso(a.tipo))}</div>
+        <div class="grow"><div class="t-main">${esc(a.titulo)}</div>${a.cuerpo ? `<div class="t-sub">${esc(a.cuerpo)}</div>` : ''}<div class="t-note">${tiempoRel(a.creado)}</div></div>
+        <div class="side">${nuevos.has(a.id) ? '<span class="badge acc">Nuevo</span>' : ''}</div></button></li>`).join('')}</ul>`
+      : vacio('Todavía no tenés avisos', esDueno() ? 'Acá aparecen los pedidos nuevos y los recordatorios.' : 'Acá aparecen los cambios de tus turnos y presupuestos, los recordatorios y tus descuentos.')}</section>
+    ${prefsAvisosHTML()}`;
+}
+
+/* ---------- inventario del guardamuebles ---------- */
+const COND = { 'Bueno':'ok', 'Regular':'warn', 'Con daños':'bad' };
+function filtrarInv(items){
+  const q = sinAcentos(S.qInv.toLowerCase().trim());
+  return q ? items.filter(i => sinAcentos((i.nombre + ' ' + i.nota).toLowerCase()).includes(q)) : items;
+}
+function listaInvHTML(items, editable){
+  const f = filtrarInv(items);
+  if (!f.length) return vacio(items.length ? 'No encontramos nada con esa búsqueda' : 'Todavía no hay ítems cargados', items.length ? 'Probá con otra palabra.' : (editable ? 'Cargá lo que el cliente dejó en su guardamueble.' : 'Lo cargamos cuando ingresás o retirás cosas. Si ya dejaste algo, escribinos.'));
+  return `<ul class="list">${f.map(i => `<li><div class="row">
+    <div class="dt off"><small>Cant.</small><b>${i.cantidad}</b></div>
+    <div class="grow"><div class="t-main">${esc(i.nombre)}</div>${i.nota ? `<div class="t-sub">${esc(i.nota)}</div>` : ''}<div class="t-note">${i.ingreso ? 'Ingresó el ' + fmtLargo(i.ingreso) : 'Sin fecha de ingreso'}</div></div>
+    <div class="side"><span class="badge ${COND[i.condicion] || ''}">${esc(i.condicion)}</span>${editable ? `<button class="btn sec sm" data-act="m-item" data-id="${i.id}">${ic('edit')}Editar</button>` : ''}</div></div></li>`).join('')}</ul>`;
+}
+const kpisInv = items => `<div class="kpis"><div class="kpi"><b>${items.length}</b><span>Ítems</span></div><div class="kpi"><b>${items.reduce((s, i) => s + i.cantidad, 0)}</b><span>Bultos en total</span></div>
+  <div class="kpi ${items.some(i => i.condicion === 'Con daños') ? 'hot' : ''}"><b>${items.filter(i => i.condicion === 'Con daños').length}</b><span>Con daños</span></div></div>`;
+function pintarInv(){
+  const box = $('#inv-lista'); if (!box) return;
+  const items = itemsDe(esDueno() ? S.invCli : S.user.id);
+  box.innerHTML = listaInvHTML(items, esDueno());
+}
+function vInvC(){
+  const u = S.user, un = uni(u.unidadId), items = itemsDe(u.id);
+  return `<div class="pagehead"><div><h1 class="h1">Mi inventario</h1><p class="sub">${un ? `Lo que tenés guardado en ${esc(un.nombre)} · ${esc(un.sede)}.` : 'Todavía no tenés guardamueble asignado.'}</p></div></div>
+    ${un || items.length ? `${kpisInv(items)}
+      <div class="field"><label for="inv-q">Buscar</label><input class="in" id="inv-q" type="search" placeholder="Por ejemplo: sillón, cajas" autocomplete="off" value="${esc(S.qInv)}"></div>
+      <section class="card flush" id="inv-lista">${listaInvHTML(items, false)}</section>
+      <p class="hint">Este inventario lo carga y actualiza PG Logística cuando dejás o retirás cosas. Si algo no coincide, escribinos.</p>`
+    : `<section class="card">${vacio('Sin guardamueble asignado', 'Cuando contrates un espacio, acá vas a ver todo lo que guardaste.')}</section>`}`;
+}
+function vInvD(){
+  const cl = clientes().filter(c => c.unidadId || itemsDe(c.id).length);
+  if (!S.invCli || !cl.some(c => c.id === S.invCli)) S.invCli = (cl[0] || {}).id || null;
+  const c = S.invCli ? usr(S.invCli) : null, un = c && uni(c.unidadId), items = c ? itemsDe(c.id) : [];
+  return `<div class="pagehead"><div><h1 class="h1">Inventario</h1><p class="sub">Cargá y actualizá lo que cada cliente tiene guardado.</p></div>
+      ${c ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sec" data-act="m-items" data-cli="${c.id}">${ic('list')}Cargar varios</button><button class="btn primary" data-act="m-item" data-cli="${c.id}">${ic('plus')}Agregar ítem</button></div>` : ''}</div>
+    ${c ? `<div class="field" style="max-width:360px"><label for="inv-cli">Cliente</label><select class="in" id="inv-cli" data-filtro="inv-cli">${cl.map(x => `<option value="${x.id}" ${x.id === c.id ? 'selected' : ''}>${esc(x.nombre)}${x.unidadId ? ' · ' + esc(uni(x.unidadId).nombre) : ''}</option>`).join('')}</select></div>
+      <p class="sub">${un ? `${esc(un.nombre)} · ${esc(un.sede)} · ${un.m2} m²` : 'Sin guardamueble asignado'}</p>
+      ${kpisInv(items)}
+      <div class="field"><label for="inv-q">Buscar</label><input class="in" id="inv-q" type="search" placeholder="Por ejemplo: sillón, cajas" autocomplete="off" value="${esc(S.qInv)}"></div>
+      <section class="card flush" id="inv-lista">${listaInvHTML(items, true)}</section>
+      <p class="hint">Cada vez que cargás o cambiás algo, el cliente recibe un aviso (como máximo uno por día).</p>`
+    : `<section class="card">${vacio('Todavía no hay clientes con guardamueble', 'Asigná un guardamueble a un cliente para cargar su inventario.', `<button class="btn primary" data-act="ir" data-v="unidades">Ir a Guardamuebles</button>`)}</section>`}`;
 }
 
 /* ---------- ajustes (dueño) ---------- */
@@ -1231,13 +1733,25 @@ function vAjustes(){
           <div class="field"><label for="a-cupo">Cupo por horario</label><input class="in" id="a-cupo" inputmode="numeric" value="${c.cupo}"></div>
           <div class="field"><label for="a-hs">Cancelación hasta (hs antes)</label><input class="in" id="a-hs" inputmode="numeric" value="${c.horasCancelar}"></div>
         </div>
-        <div class="field"><label for="a-fr">Horarios (separados por coma)</label><input class="in" id="a-fr" value="${esc(c.franjas.join(', '))}"><span class="hint">Formato 24 hs. Ejemplo: 09:00, 10:00, 15:00</span></div>
+        <div class="field"><label for="a-fr">Horarios de lunes a viernes</label><input class="in" id="a-fr" value="${esc(c.franjas.join(', '))}"><span class="hint">Separados por coma, en formato 24 hs. Cada uno es la hora de inicio de un turno.</span></div>
+        <div class="field"><label for="a-fs">Horarios de sábados</label><input class="in" id="a-fs" value="${esc((c.franjasSab || []).join(', '))}"><span class="hint">Si habilitás los domingos, usan estos mismos horarios.</span></div>
         <div class="field"><span class="lbl">Días de atención</span><div class="checks">${[1,2,3,4,5,6,0].map(d => `<label><input type="checkbox" name="dia" value="${d}" ${c.dias.includes(d) ? 'checked' : ''}>${cap(DL[d])}</label>`).join('')}</div></div>
         <div class="field" style="max-width:240px"><label for="a-ant">Se puede pedir con hasta (días)</label><input class="in" id="a-ant" inputmode="numeric" value="${c.diasAnticipo}"></div>
         <p class="msg bad" id="m-err" role="alert" hidden></p>
         <div class="actions"><button class="btn primary" type="submit">Guardar turnos</button></div>
       </form></section>
     <div style="display:grid;gap:16px;align-content:start">
+      <section class="card"><h2 class="h2">Avisos y recordatorios</h2>
+        <form class="form" data-form="cfgAvisos" novalidate>
+          <div class="g2">
+            <div class="field"><label for="a-rt">Recordar turnos (hs antes)</label><input class="in" id="a-rt" inputmode="numeric" value="${c.recordarTurnoHs}"></div>
+            <div class="field"><label for="a-rm">Recordar mudanzas (hs antes)</label><input class="in" id="a-rm" inputmode="numeric" value="${c.recordarMudanzaHs}"><span class="hint">Se usa la hora que cargás en el presupuesto.</span></div>
+          </div>
+          <div class="field"><span class="lbl">Promociones semanales: días posibles</span><div class="checks">${[1,2,3,4,5,6,0].map(d => `<label><input type="checkbox" name="pdia" value="${d}" ${c.promoDias.includes(d) ? 'checked' : ''}>${cap(DL[d])}</label>`).join('')}</div>
+            <span class="hint">Cada semana se elige uno de estos días al azar y los clientes reciben un solo aviso con sus descuentos.</span></div>
+          <p class="msg bad" id="m-err3" role="alert" hidden></p>
+          <div class="actions"><button type="button" class="btn sec" data-act="ir" data-v="avisos">Elegir qué avisos recibo</button><button class="btn primary" type="submit">Guardar avisos</button></div>
+        </form></section>
       <section class="card"><h2 class="h2">Contacto</h2>
         <form class="form" data-form="cfgContacto" novalidate>
           <div class="field"><label for="a-wa">WhatsApp del negocio</label><input class="in" id="a-wa" type="tel" inputmode="tel" placeholder="11 5555-0000" value="${esc(c.whatsapp)}"><span class="hint">Los clientes ven un botón para escribirte. Vacío lo oculta.</span></div>
@@ -1270,12 +1784,33 @@ function vPublico(){
         <h1 class="h2">Gracias, ${esc(primerNombre(p.nombre))}. Te contactamos para pasarte el presupuesto.</h1>
         <p class="sub">${esc(p.servicio)}${p.fecha ? ' · ' + fmtCorto(p.fecha) : ''}. Vamos a llamarte o escribirte al ${esc(p.telefono)}.</p>
         ${d ? `<p class="msg ok">Se aplicó tu código ${esc(p.codigo)}: ${d}% de descuento en la cotización.</p>` : ''}
-        ${DB.config.whatsapp ? `<a class="btn sec" href="${waLink(DB.config.whatsapp, 'Hola, hice el pedido ' + nPres(p) + ' en PG Logística.')}" target="_blank" rel="noopener">${ic('chat')}Escribir por WhatsApp</a>` : ''}
+        ${DB.config.whatsapp ? `<a class="btn sec" href="${waLink(DB.config.whatsapp, 'Hola, hice el pedido ' + nPres(p) + ' en PG Logística.')}" target="_blank" rel="noopener">${icWA()}Escribir por WhatsApp</a>` : ''}
         <button class="btn primary" data-act="pub-volver">Listo</button></section></div>`;
   }
   return `<div class="pub gut"><div class="pub-top"><div class="brand">${marcaHTML()}</div>${volver}</div>
     <div><h1 class="h1">Pedí tu presupuesto</h1><p class="sub" style="margin-top:6px">Mudanzas, movimiento de maquinaria, guardamuebles y fletes. Te respondemos por teléfono o WhatsApp.</p></div>
     <section class="card">${formPresHTML(true)}</section></div>`;
+}
+
+/* ---------- crear cuenta ---------- */
+function vRegistro(){
+  const cfg = DB.config;
+  return `<div class="pub gut"><div class="pub-top"><div class="brand">${marcaHTML()}</div><button class="btn sec sm" data-act="pub-volver">Volver al ingreso</button></div>
+    <div><h1 class="h1">Creá tu cuenta</h1><p class="sub" style="margin-top:6px">Con tu cuenta ves tus presupuestos, turnos, inventario y descuentos, y recibís avisos.</p></div>
+    <section class="card"><form class="form" data-form="registro" novalidate>
+      <div class="g2">
+        <div class="field"><label for="rn">Nombre y apellido</label><input class="in" id="rn" autocomplete="name"></div>
+        <div class="field"><label for="pt">Teléfono</label><input class="in" id="pt" type="tel" inputmode="tel" autocomplete="tel" placeholder="11 5555-0000"></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label for="ru">Usuario</label><input class="in" id="ru" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"><span class="hint">Letras y números, sin espacios ni tildes.</span></div>
+        <div class="field"><label for="rp">Contraseña</label><input class="in" id="rp" type="password" autocomplete="new-password"><span class="hint">Mínimo ${MINPASS} caracteres.</span></div>
+      </div>
+      <div class="field"><label for="pc">Código de referido (opcional)</label><input class="in" id="pc" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="PG-NOMBRE00"><div id="pc-msg" class="hint">Si te recomendó un cliente, cargá su código y obtené ${cfg.descReferido}% de descuento en tu primera mudanza.</div></div>
+      <p class="msg bad" id="m-err" role="alert" hidden></p>
+      <button class="btn primary block" type="submit">Crear mi cuenta</button>
+      ${NUBE ? `<p class="hint">Al crear tu cuenta aceptás la <a href="${POLITICA_URL}" target="_blank" rel="noopener">política de privacidad</a>.</p>` : ''}
+    </form></section></div>`;
 }
 
 /* =====================================================================
@@ -1285,7 +1820,7 @@ let T = {};
 function pintarSlots(){
   const box = $('#slots'); if (!box) return;
   if (!T.fecha) { box.innerHTML = '<p class="hint" style="grid-column:1/-1">Elegí un día para ver los horarios.</p>'; }
-  else box.innerHTML = DB.config.franjas.map(h => {
+  else box.innerHTML = (franjasDe(T.fecha).length ? franjasDe(T.fecha) : []).map(h => {
     const si = slotInfo(T.fecha, h), off = si.pasado || si.libre <= 0;
     return `<button type="button" class="slot" data-act="t-hora" data-h="${h}" aria-pressed="${T.hora === h}" ${off ? 'disabled' : ''}>${h}${off ? `<small>${si.pasado ? 'Pasó' : 'Completo'}</small>` : ''}</button>`;
   }).join('');
@@ -1315,8 +1850,12 @@ function mPresNuevo(){ abrir('Pedir presupuesto', formPresHTML(false)); }
 
 function prevCot(p){
   const el = $('#q-prev'); if (!el) return;
-  const m = parseMonto($('#q-monto').value), d = descuentosDe(p);
-  el.innerHTML = m > 0 ? bloqueTotal(m, d.ref, d.cred) + ((d.ref || d.cred) ? '' : '<p class="hint" style="margin-top:6px">Este pedido no tiene descuentos.</p>') : '<p class="hint">Cargá el precio base y ves el total con descuentos.</p>';
+  const m = parseMonto($('#q-monto').value), d = previsionDescuentos(p);
+  const hay = d.ref || d.cred || d.men;
+  const nota = !p.clienteId ? 'Este pedido es de alguien sin cuenta: no lleva descuentos del mes ni por referidos' + (d.ref ? ', solo el código.' : '.')
+    : hay ? '' : 'Este pedido no tiene descuentos.';
+  el.innerHTML = m > 0 ? bloqueTotal(m, d) + (nota ? `<p class="hint" style="margin-top:6px">${nota}</p>` : '') + (d.sinSorteo ? '<p class="hint">Si el cliente todavía no tiene su descuento del mes, se sortea al confirmar.</p>' : '')
+    : '<p class="hint">Cargá el precio base y ves el total con los descuentos que se aplican solos.</p>';
 }
 const parseMonto = s => Number(String(s).replace(/[^\d]/g, '')) || 0;
 
@@ -1326,39 +1865,47 @@ function mPresDet(id){
   if (!du && p.clienteId !== S.user.id) return;            // cada cliente ve solo lo suyo
   const ref = p.codigoRefId ? usr(p.codigoRefId) : null;
   const cotizado = p.monto > 0 && p.estado !== 'pendiente';
-  const wa = p.telefono ? waLink(p.telefono, cotizado && p.estado === 'cotizado'
-      ? `Hola ${primerNombre(p.nombre)}! Te paso el presupuesto de PG Logística (${nPres(p)}) para ${p.servicio}: total ${money(totalDe(p.monto, p.descRef, p.descCred))}. ${p.nota || ''}`.trim()
+  const wa = p.telefono ? waLink(p.telefono, cotizado
+      ? `Hola ${primerNombre(p.nombre)}! Te paso el presupuesto de PG Logística (${nPres(p)}) para ${p.servicio}: total ${money(totalPres(p))}.${p.nota ? ' ' + p.nota : ''}`
       : `Hola ${primerNombre(p.nombre)}! Te escribimos de PG Logística por tu pedido de presupuesto (${nPres(p)}).`) : '';
   let acciones = '';
+  if (cotizado) acciones += `<button class="btn ${du ? 'sec' : 'soft'}" data-act="p-pdf" data-id="${p.id}">${ic('share')}Compartir PDF</button>`;
   if (du) {
     if (p.estado === 'cotizado') acciones += `<button class="btn good" data-act="p-aceptado" data-id="${p.id}">Marcar aceptado</button>`;
     if (p.estado === 'aceptado') acciones += `<button class="btn primary" data-act="p-realizado" data-id="${p.id}">${ic('check')}Marcar realizado</button>`;
     if (['pendiente','cotizado','aceptado'].includes(p.estado)) acciones += `<button class="btn danger" data-act="p-rechazado" data-id="${p.id}">Rechazar</button>`;
-    if (wa) acciones += `<a class="btn sec" href="${wa}" target="_blank" rel="noopener">${ic('chat')}WhatsApp</a>`;
+    if (wa) acciones += `<a class="btn sec" href="${wa}" target="_blank" rel="noopener">${icWA()}Abrir WhatsApp</a>`;
   } else {
-    if (p.estado === 'cotizado') acciones += `<button class="btn primary" data-act="p-aceptar" data-id="${p.id}">Aceptar cotización</button><button class="btn sec" data-act="p-no" data-id="${p.id}">No me interesa</button>`;
+    if (p.estado === 'cotizado') acciones += `<button class="btn primary" data-act="p-aceptar" data-id="${p.id}">Aceptar presupuesto</button><button class="btn sec" data-act="p-no" data-id="${p.id}">No me interesa</button>`;
     if (p.estado === 'pendiente') acciones += `<button class="btn sec" data-act="p-cancelar" data-id="${p.id}">Cancelar pedido</button>`;
   }
+  const aviso = !p.clienteId ? 'Esta persona no tiene cuenta en la app: compartile el PDF por WhatsApp.' : `Se envía a la cuenta de ${esc(primerNombre(p.nombre))} y le llega un aviso.`;
   abrir(`${nPres(p)} · ${p.servicio}`, `
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${badge(BP, p.estado)}${p.codigoRefId ? `<span class="tag">${esc(p.codigo)}</span>` : ''}</div>
     <dl class="dl">
       <dt>Solicitante</dt><dd>${esc(p.nombre)}${p.clienteId ? ' (cliente)' : ''}</dd>
       <dt>Teléfono</dt><dd>${esc(p.telefono) || '—'}</dd>
       ${p.origen ? `<dt>Origen</dt><dd>${esc(p.origen)}</dd>` : ''}${p.destino ? `<dt>Destino</dt><dd>${esc(p.destino)}</dd>` : ''}
-      ${p.fecha ? `<dt>Fecha estimada</dt><dd>${fmtLargo(p.fecha)}</dd>` : ''}
+      ${p.fecha ? `<dt>Fecha estimada</dt><dd>${fmtLargo(p.fecha)}${p.hora ? ' · ' + p.hora + ' hs' : ''}</dd>` : ''}
       ${p.detalle ? `<dt>Detalle</dt><dd>${esc(p.detalle)}</dd>` : ''}
       ${ref && du ? `<dt>Lo recomendó</dt><dd>${esc(ref.nombre)}</dd>` : ''}
     </dl>
-    ${cotizado ? `<div class="panel">${bloqueTotal(p.monto, p.descRef, p.descCred)}${p.nota ? `<p class="sub">${esc(p.nota)}</p>` : ''}</div>` : ''}
+    ${cotizado ? `<div class="panel" id="p-doc">${bloqueTotal(p.monto, dPres(p))}${p.nota ? `<p class="sub">${esc(p.nota)}</p>` : ''}</div>` : ''}
     ${du && (p.estado === 'pendiente' || p.estado === 'cotizado') ? `<form class="form" data-form="cotizar" data-id="${p.id}" novalidate>
-      <div class="field"><label for="q-monto">Precio base (ARS)</label><input class="in" id="q-monto" inputmode="numeric" placeholder="Ej.: 150000" value="${p.monto || ''}"></div>
+      <h3 class="h2" style="font-size:16px">${p.estado === 'cotizado' ? 'Actualizar presupuesto' : 'Preparar presupuesto'}</h3>
+      <div class="g2">
+        <div class="field"><label for="q-monto">Precio base (ARS)</label><input class="in" id="q-monto" inputmode="numeric" placeholder="Ej.: 150000" value="${p.monto || ''}"></div>
+        <div class="field"><label for="q-hora">Hora del servicio (opcional)</label><input class="in" id="q-hora" type="time" value="${esc(p.hora)}"><span class="hint">Se usa para el recordatorio.</span></div>
+      </div>
       <div class="panel" id="q-prev"></div>
       <div class="field"><label for="q-nota">Nota para el cliente (opcional)</label><textarea class="in" id="q-nota" placeholder="Qué incluye, ayudantes, condiciones de pago">${esc(p.nota)}</textarea></div>
+      <p class="hint">${aviso}</p>
       <p class="msg bad" id="m-err" role="alert" hidden></p>
-      <button class="btn primary" type="submit">${p.estado === 'cotizado' ? 'Actualizar cotización' : 'Guardar cotización'}</button></form>` : ''}
+      <button class="btn primary" type="submit">${p.estado === 'cotizado' ? 'Actualizar y volver a enviar' : 'Confirmar presupuesto'}</button></form>` : ''}
     ${!du && p.estado === 'pendiente' ? '<p class="sub">Estamos revisando tu pedido. Te avisamos cuando tengamos el presupuesto.</p>' : ''}
     ${acciones ? `<div class="actions" style="justify-content:flex-start">${acciones}</div>` : ''}`);
   if (du) prevCot(p);
+  if (cotizado) pdfCacheado(p).catch(() => {});
 }
 
 function mCliente(id, unidadPre){
@@ -1374,7 +1921,8 @@ function mCliente(id, unidadPre){
       <div class="field"><label for="k-p">${c ? 'Contraseña nueva' : 'Contraseña'}</label><input class="in" id="k-p" type="text" autocomplete="off" placeholder="${c ? 'Dejar vacío para no cambiarla' : 'Mínimo ' + MINPASS + ' caracteres'}"></div>
     </div>
     <div class="field"><label for="k-g">Guardamueble</label><select class="in" id="k-g"><option value="">Sin asignar</option>${libres.map(u => `<option value="${u.id}" ${(c && c.unidadId === u.id) || (!c && unidadPre === u.id) ? 'selected' : ''}>${esc(u.nombre)} · ${esc(u.sede)} · ${u.m2} m²</option>`).join('')}</select></div>
-    ${c ? `<p class="hint">Código de referido: <b>${esc(c.codigo)}</b> · Descuento acumulado: ${c.credito || 0}%</p>` : '<p class="hint">El código de referido se genera solo.</p>'}
+    ${c ? `<p class="hint">Código de referido: <b>${esc(c.codigo)}</b> · Por referidos disponible: ${creditoLibre(c.id)}%</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn soft sm" data-act="m-desc" data-id="${c.id}">Ver descuentos</button><button type="button" class="btn soft sm" data-act="inv-de" data-id="${c.id}">${ic('list')}Ver inventario</button></div>` : '<p class="hint">El código de referido se genera solo.</p>'}
     <p class="msg bad" id="m-err" role="alert" hidden></p>
     <div class="actions">${c ? `<button type="button" class="btn danger" data-act="del-cli" data-id="${c.id}">Eliminar</button>` : ''}<button type="button" class="btn sec" data-act="cerrar">Cancelar</button><button class="btn primary" type="submit">${c ? 'Guardar' : 'Crear cliente'}</button></div>
   </form>`);
@@ -1402,6 +1950,7 @@ function mCuenta(){
       ${u.telefono ? `<dt>Teléfono</dt><dd>${esc(u.telefono)}</dd>` : ''}
       ${un ? `<dt>Guardamueble</dt><dd>${esc(un.nombre)} · ${esc(un.sede)}</dd>` : ''}
     </dl>
+    <label class="sw" style="border-top:0;padding-top:0"><input type="checkbox" data-pref="promos" ${(u.avisos || {}).promos !== false ? 'checked' : ''}><span class="sw-t"><b>Recibir promociones</b><small>Tu descuento del mes y un resumen semanal. Los avisos de turnos y presupuestos siempre te llegan.</small></span></label>
     <form class="form" data-form="miClave" novalidate>
       <h3 class="h2" style="font-size:16px">Cambiar contraseña</h3>
       <div class="field"><label for="mc-p0">Contraseña actual</label><input class="in" id="mc-p0" type="password" autocomplete="current-password"></div>
@@ -1424,44 +1973,267 @@ function mEliminarCuenta(){
     </form>`);
 }
 
+/* ---------- inventario: modales (los usa la administración) ---------- */
+function mItem(id, cli){
+  const i = id ? DB.inventario.find(x => x.id === id) : null, cid = i ? i.clienteId : cli;
+  abrir(i ? 'Editar ítem' : 'Agregar ítem', `<form class="form" data-form="item" data-id="${i ? i.id : ''}" data-cli="${esc(cid)}" novalidate>
+    <p class="sub">${esc(nombreCliente(cid))}</p>
+    <div class="g2">
+      <div class="field"><label for="i-n">Qué es</label><input class="in" id="i-n" maxlength="120" placeholder="Sillón de 3 cuerpos" value="${i ? esc(i.nombre) : ''}"></div>
+      <div class="field"><label for="i-c">Cantidad</label><input class="in" id="i-c" inputmode="numeric" value="${i ? i.cantidad : 1}"></div>
+    </div>
+    <div class="g2">
+      <div class="field"><label for="i-k">Condición</label><select class="in" id="i-k">${CONDICIONES.map(c => `<option ${i && i.condicion === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label for="i-f">Fecha de ingreso (opcional)</label><input class="in" id="i-f" type="date" value="${i ? esc(i.ingreso) : hoyISO()}"></div>
+    </div>
+    <div class="field"><label for="i-o">Comentario (opcional)</label><textarea class="in" id="i-o" maxlength="300" placeholder="Estado, color, cómo está embalado">${i ? esc(i.nota) : ''}</textarea></div>
+    <p class="msg bad" id="m-err" role="alert" hidden></p>
+    <div class="actions">${i ? `<button type="button" class="btn danger" data-act="del-item" data-id="${i.id}">Eliminar</button>` : ''}<button type="button" class="btn sec" data-act="cerrar">Cancelar</button><button class="btn primary" type="submit">Guardar</button></div>
+  </form>`);
+}
+function mItems(cli){
+  abrir('Cargar varios ítems', `<form class="form" data-form="items" data-cli="${esc(cli)}" novalidate>
+    <p class="sub">${esc(nombreCliente(cli))}</p>
+    <div class="field"><label for="i-l">Un ítem por línea</label><textarea class="in" id="i-l" style="min-height:160px" placeholder="6 sillas de comedor&#10;Mesa ratona&#10;12 cajas de libros"></textarea>
+      <span class="hint">Si empieza con un número, es la cantidad. Se cargan en buen estado; después podés editar cada uno.</span></div>
+    <p class="msg bad" id="m-err" role="alert" hidden></p>
+    <div class="actions"><button type="button" class="btn sec" data-act="cerrar">Cancelar</button><button class="btn primary" type="submit">Cargar</button></div>
+  </form>`);
+}
+function parsearItems(texto){
+  return String(texto).split(/\n/).map(l => l.trim()).filter(Boolean).map(l => {
+    const m = l.match(/^(\d{1,4})\s*(?:x|×|u\.?|unidades?)?\s+(.+)$/i);
+    return m ? { cantidad:Number(m[1]), nombre:m[2].trim().slice(0, 120) } : { cantidad:1, nombre:l.slice(0, 120) };
+  });
+}
+function mDesc(id){
+  const c = usr(id); if (!c) return;
+  abrir('Descuentos de ' + primerNombre(c.nombre), `${resumenDesc(c, false)}<h3 class="h2" style="font-size:16px">Registro</h3><div class="card flush">${registroHTML(registroDe(c.id))}</div>`);
+}
+
+/* =====================================================================
+   Presupuesto en PDF, con el mismo diseño que se ve en la app.
+   Se dibuja en un lienzo (tamaño A4, 150 ppp) y se guarda como página de un PDF.
+   Para compartirlo: menú de compartir del teléfono (app instalada o navegador);
+   si no existe, se descarga para adjuntarlo en WhatsApp.
+   ===================================================================== */
+async function pdfPresupuesto(p){
+  const W = 1240, H = 1754, k = W / 595.28;                     // trabajamos en puntos (A4 = 595 × 842) y se escala
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d');
+  try { await Promise.all([document.fonts.load('700 20px "Bricolage Grotesque"'), document.fonts.load('600 12px Figtree'), document.fonts.load('400 12px Figtree')]); } catch(e){}
+  const C = { fg:'#0a1a35', fg2:'#3f526e', fg3:'#5f7089', line:'#d8e2f2', s2:'#e9f0fb', acc:'#1456d9', soft:'#e1ebfd', ink:'#0d3d9e', ok:'#0b7650', okS:'#dbf2e7', a:'#0f43b0', b:'#2271f2' };
+  const fam = disp => (disp ? "'Bricolage Grotesque'," : "'Figtree',") + " system-ui, -apple-system, 'Segoe UI', sans-serif";
+  const font = (peso, pt, disp) => `${peso} ${(pt * k).toFixed(1)}px ${fam(disp)}`;
+  const X = v => v * k;
+  const texto = (t, x, y, f, color, alinear) => { g.font = f; g.fillStyle = color; g.textAlign = alinear || 'left'; g.textBaseline = 'alphabetic'; g.fillText(t, X(x), X(y)); };
+  const ancho = (t, f) => { g.font = f; return g.measureText(t).width / k; };
+  const rr = (x, y, w, h, r, fill) => { g.beginPath(); g.roundRect ? g.roundRect(X(x), X(y), X(w), X(h), X(r)) : g.rect(X(x), X(y), X(w), X(h)); g.fillStyle = fill; g.fill(); };
+  const lineas = (t, f, max, tope) => {
+    const out = []; let linea = '';
+    for (const palabra of String(t || '').replace(/\s+/g, ' ').trim().split(' ')) {
+      const prueba = linea ? linea + ' ' + palabra : palabra;
+      if (ancho(prueba, f) <= max) linea = prueba; else { if (linea) out.push(linea); linea = palabra; }
+    }
+    if (linea) out.push(linea);
+    if (tope && out.length > tope) { out.length = tope; out[tope - 1] = out[tope - 1].replace(/.{0,2}$/, '') + '…'; }
+    return out;
+  };
+
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+
+  // --- cabecera ---
+  const grad = g.createLinearGradient(0, 0, W, X(130)); grad.addColorStop(0, C.a); grad.addColorStop(1, C.b);
+  g.fillStyle = grad; g.fillRect(0, 0, W, X(130));
+  g.strokeStyle = 'rgba(255,255,255,.07)'; g.lineWidth = 1;
+  for (let x = 0; x < 595; x += 28) { g.beginPath(); g.moveTo(X(x), 0); g.lineTo(X(x), X(130)); g.stroke(); }
+  for (let y = 0; y < 130; y += 28) { g.beginPath(); g.moveTo(0, X(y)); g.lineTo(W, X(y)); g.stroke(); }
+  let xTxt = 40;
+  try {
+    const img = new Image(); img.src = LOGO; await img.decode();
+    const h = 58, w = h * img.naturalWidth / img.naturalHeight;
+    rr(40, 36, w + 12, h + 12, 12, '#ffffff'); g.drawImage(img, X(46), X(42), X(w), X(h)); xTxt = 40 + w + 12 + 12;
+  } catch(e){}
+  texto('PG Logística', xTxt, 78, font(700, 21, true), '#ffffff');
+  texto('Mudanzas · Maquinaria · Guardamuebles', xTxt, 94, font(500, 9.5), 'rgba(255,255,255,.85)');
+  texto('PRESUPUESTO', 555, 52, font(700, 9), 'rgba(255,255,255,.85)', 'right');
+  texto(nPres(p), 555, 84, font(700, 30, true), '#ffffff', 'right');
+  texto('Emitido el ' + fmtLargo(isoDate(new Date())).replace(/^\S+\s/, '') + ' de ' + new Date().getFullYear(), 555, 102, font(500, 9.5), 'rgba(255,255,255,.85)', 'right');
+
+  // --- cuerpo ---
+  let y = 172;
+  texto(p.servicio, 40, y, font(700, 22, true), C.fg); y += 20;
+  texto('Para ' + p.nombre, 40, y, font(500, 11.5), C.fg2); y += 30;
+  const filas = [['Teléfono', p.telefono], ['Origen', p.origen], ['Destino', p.destino],
+    ['Fecha estimada', p.fecha ? fmtLargo(p.fecha) + (p.hora ? ' · ' + p.hora + ' hs' : '') : ''], ['Detalle', p.detalle]].filter(f => f[1]);
+  const fv = font(500, 11);
+  for (const [et, val] of filas) {
+    const ls = lineas(val, fv, 395, et === 'Detalle' ? 6 : 3);
+    texto(et, 40, y, font(600, 10), C.fg3);
+    ls.forEach((l, i) => texto(l, 150, y + i * 15, fv, C.fg));
+    y += Math.max(1, ls.length) * 15 + 7;
+  }
+  y += 8;
+  g.fillStyle = C.line; g.fillRect(X(40), X(y), X(515), 2); y += 28;
+
+  // --- precio y descuentos (igual que el bloque de la app) ---
+  const d = calc(p.monto, dPres(p));
+  const altoPanel = 62 + d.filas.length * 24 + (d.filas.length ? 26 : 0);
+  rr(40, y, 515, altoPanel, 14, C.s2);
+  let yy = y + 30;
+  texto('Precio base', 60, yy, font(500, 12.5), C.fg); texto(money(p.monto), 535, yy, font(600, 12.5), C.fg, 'right'); yy += 6;
+  d.filas.forEach(f => { yy += 24; texto(f.txt, 60, yy, font(600, 11.5), C.ok); texto('−' + money(f.imp), 535, yy, font(600, 11.5), C.ok, 'right'); });
+  yy += 22;
+  g.fillStyle = C.line; g.fillRect(X(60), X(yy - 8), X(475), 2);
+  yy += 22;
+  texto('Total', 60, yy, font(700, 20, true), C.fg); texto(money(d.total), 535, yy, font(700, 24, true), C.acc, 'right');
+  y += altoPanel + 14;
+  if (d.filas.length) {
+    const t = `Ahorrás ${money(d.ahorro)} (${d.pct}% de descuento sobre el precio base)`;
+    const wTxt = ancho(t, font(600, 10.5)) + 24;
+    rr(40, y, wTxt, 24, 12, C.okS); texto(t, 52, y + 16, font(600, 10.5), C.ok); y += 40;
+  } else y += 14;
+
+  if (p.nota) {
+    texto('Incluye / condiciones', 40, y, font(700, 10), C.fg3); y += 18;
+    const ls = lineas(p.nota, font(500, 11), 515, 7);
+    ls.forEach((l, i) => texto(l, 40, y + i * 15.5, font(500, 11), C.fg));
+    y += ls.length * 15.5 + 12;
+  }
+
+  // --- pie ---
+  g.fillStyle = C.line; g.fillRect(X(40), X(772), X(515), 2);
+  texto('PG Logística', 40, 796, font(700, 11, true), C.ink);
+  texto('Presupuesto generado desde la app de PG Logística.', 40, 811, font(500, 9.5), C.fg3);
+  if (DB.config.whatsapp) { texto('Consultas por WhatsApp', 555, 796, font(600, 9.5), C.fg3, 'right'); texto(DB.config.whatsapp, 555, 811, font(700, 11), C.ink, 'right'); }
+
+  const jpeg = await new Promise(res => cv.toBlob(res, 'image/jpeg', 0.92));
+  if (!jpeg) throw new Error('No se pudo generar el PDF.');
+  return jpegAPdf(new Uint8Array(await jpeg.arrayBuffer()), W, H);
+}
+
+// Arma un PDF de una página con la imagen (sin librerías)
+function jpegAPdf(jpeg, wPx, hPx){
+  const enc = new TextEncoder(), partes = [], offs = []; let largo = 0;
+  const add = x => { const b = typeof x === 'string' ? enc.encode(x) : x; partes.push(b); largo += b.length; };
+  const obj = (n, cuerpo) => { offs[n] = largo; add(`${n} 0 obj\n${cuerpo}\nendobj\n`); };
+  add('%PDF-1.4\n');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  obj(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
+  offs[4] = largo;
+  add(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${wPx} /Height ${hPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
+  add(jpeg); add('\nendstream\nendobj\n');
+  const cont = 'q\n595.28 0 0 841.89 0 0 cm\n/Im0 Do\nQ\n';
+  obj(5, `<< /Length ${cont.length} >>\nstream\n${cont}endstream`);
+  const xref = largo;
+  let tabla = 'xref\n0 6\n0000000000 65535 f \n';
+  for (let i = 1; i <= 5; i++) tabla += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+  add(tabla + `trailer\n<< /Size 6 /Root 1 0 R /Info << /Title (Presupuesto PG Logistica) >> >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob(partes, { type:'application/pdf' });
+}
+const aBase64 = blob => new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = () => mal(r.error); r.readAsDataURL(blob); });
+function descargar(blob, nombre){
+  const u = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = u; a.download = nombre; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000);
+}
+// El PDF se prepara de antemano al abrir el presupuesto: algunos teléfonos solo dejan compartir si se hace enseguida del toque
+const pdfListos = new Map();
+function pdfCacheado(p){
+  const clave = JSON.stringify([p.id, p.monto, p.hora, p.nota, p.fecha, p.descRef, p.descCred, p.descMensual, p.nombre, p.telefono, p.origen, p.destino, p.detalle, DB.config.whatsapp]);
+  if (!pdfListos.has(clave)) { if (pdfListos.size > 6) pdfListos.clear(); pdfListos.set(clave, pdfPresupuesto(p).catch(e => { pdfListos.delete(clave); throw e; })); }
+  return pdfListos.get(clave);
+}
+// Devuelve { ok, descargado?, cancelado? } o { error }
+async function compartirPresupuesto(p){
+  try {
+    const blob = await pdfCacheado(p), nombre = `Presupuesto ${nPres(p)} - PG Logistica.pdf`, titulo = `Presupuesto ${nPres(p)} de PG Logística`;
+    const cap = window.Capacitor, pl = cap && cap.Plugins;
+    if (cap && cap.isNativePlatform && cap.isNativePlatform() && pl && pl.Filesystem && pl.Share) {          // app instalada
+      try {
+        const f = await pl.Filesystem.writeFile({ path:`presupuesto-${nPres(p)}.pdf`, data:await aBase64(blob), directory:'CACHE' });
+        await pl.Share.share({ title:titulo, text:titulo, url:f.uri, dialogTitle:'Compartir presupuesto' });
+        return { ok:true };
+      } catch(e){ if (/cancel/i.test((e && e.message) || '')) return { ok:true, cancelado:true }; }
+    }
+    const file = new File([blob], nombre, { type:'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files:[file] })) {                                         // navegador con menú de compartir
+      try { await navigator.share({ files:[file], title:titulo }); return { ok:true }; }
+      catch(e){ if (e && e.name === 'AbortError') return { ok:true, cancelado:true }; }
+    }
+    descargar(blob, nombre); return { ok:true, descargado:true };
+  } catch(e){ console.error(e); return { error:'No se pudo preparar el PDF. Probá de nuevo.' }; }
+}
+
 /* =====================================================================
    Pantallas, acciones y arranque
    ===================================================================== */
-const VISTAS_D = { resumen:vResumen, turnos:vTurnosD, presupuestos:vPresD, unidades:vUnidades, referidos:vRefD, ajustes:vAjustes };
-const VISTAS_C = { inicio:vInicio, turnos:vTurnosC, presupuestos:vPresC, referidos:vRefC };
+const VISTAS_D = { resumen:vResumen, turnos:vTurnosD, presupuestos:vPresD, unidades:vUnidades, inventario:vInvD, referidos:vRefD, avisos:vAvisos, ajustes:vAjustes };
+const VISTAS_C = { inicio:vInicio, turnos:vTurnosC, presupuestos:vPresC, inventario:vInvC, referidos:vRefC, avisos:vAvisos };
 
 function render(){
   const root = $('#app');
-  if (S.pub) { root.innerHTML = vPublico(); return; }
+  if (S.pub) { root.innerHTML = S.pub === 'cuenta' ? vRegistro() : vPublico(); return; }
   if (!S.user) { root.innerHTML = vLogin(); return; }
+  if (S.uiDe !== S.user.id) { S.uiDe = S.user.id; S.qInv = ''; S.invCli = null; S.filtroT = 'proximos'; S.filtroP = 'todos'; S.filtroU = ''; S.sinLeer = null; }   // otra persona: empieza con filtros limpios
   const V = esDueno() ? VISTAS_D : VISTAS_C;
   if (!V[S.view]) S.view = esDueno() ? 'resumen' : 'inicio';
   root.innerHTML = shell(V[S.view]());
 }
-function go(v){ S.view = v; render(); window.scrollTo(0, 0); refrescarSilencioso(); }
+function go(v){
+  S.view = v;
+  if (v === 'avisos') S.sinLeer = new Set(misAvisos().filter(a => !a.leido).map(a => a.id)); else S.sinLeer = null;
+  render(); window.scrollTo(0, 0);
+  if (v === 'avisos' && S.sinLeer.size) ops.marcarLeidos().then(actualizarCampana);
+  refrescarSilencioso();
+}
+function actualizarCampana(){
+  const b = $('.bell'); if (!b) return;
+  const n = avisosSinLeer(), d = b.querySelector('.dot'); if (d) d.remove();
+  if (n) b.insertAdjacentHTML('beforeend', `<span class="dot" id="bell-n">${n > 9 ? '9+' : n}</span>`);
+  b.setAttribute('aria-label', 'Avisos' + (n ? ', ' + n + ' sin leer' : ''));
+}
+const firma = () => JSON.stringify([DB.avisos, DB.presupuestos, DB.turnos, DB.inventario, DB.mensuales, DB.creditos, DB.unidades.length]);
+// avisos que llegaron mientras la app estaba abierta: se muestran como un cartel y en la campana
+function anunciarNuevos(idsAntes){
+  const nuevos = misAvisos().filter(a => !idsAntes.has(a.id) && !a.leido);
+  if (nuevos.length) toast(nuevos.length === 1 ? nuevos[0].titulo : `Tenés ${nuevos.length} avisos nuevos`);
+  if (S.view === 'avisos' && S.sinLeer) { nuevos.forEach(a => S.sinLeer.add(a.id)); if (nuevos.length) ops.marcarLeidos().then(actualizarCampana); }
+  return nuevos.length;
+}
 
-/* En la nube, al cambiar de pantalla o volver a la app se traen los datos más nuevos
+/* En la nube, al cambiar de pantalla, al volver a la app y cada minuto se traen los datos más nuevos
    (sin pisar un formulario o una ventana que el usuario tenga abierta). */
 let ultimaCarga = Date.now();
-async function refrescarSilencioso(forzar){
+async function refrescarSilencioso(forzar, sondeo){
   if (!NUBE || !S.user || ocupado || $('#modal-root .ov')) return;
   if (!forzar && Date.now() - ultimaCarga < 15000) return;
-  const antes = S.view;
+  const antes = S.view, f0 = firma(), ids0 = new Set(misAvisos().map(a => a.id));
   try { await ops.refrescar(); ultimaCarga = Date.now(); }
   catch(e){ if (e.sesion) forzarSalida(e.message); return; }
+  if (!S.user) return;
+  anunciarNuevos(ids0);
   const a = document.activeElement;
-  if (S.user && S.view === antes && !$('#modal-root .ov') && !(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render();
+  const seguro = S.user && S.view === antes && !$('#modal-root .ov') && !(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
+  if (seguro && (!sondeo || firma() !== f0)) render(); else actualizarCampana();
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refrescarSilencioso(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { NUBE ? refrescarSilencioso() : sondeoDemo(); } });
+function sondeoDemo(){        // modo demo: los recordatorios y promociones los genera la propia app
+  if (!DEMO || !S.user || !DB) return;
+  const ids0 = new Set(misAvisos().map(a => a.id)); tareasDemo();
+  if (anunciarNuevos(ids0) && !$('#modal-root .ov')) { const a = document.activeElement; if (!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render(); }
+  actualizarCampana();
+}
+setInterval(() => { if (document.visibilityState === 'visible' && S.user) { NUBE ? refrescarSilencioso(true, true) : sondeoDemo(); } }, 60000);
 
 let tCod = null, seqCod = 0;
 function refrescarCodigo(){
   const c = $('#pc'), m = $('#pc-msg'); if (!c || !m) return;
   const tel = ($('#pt') || {}).value || '';
   const pintar = v => {
-    if (v.vacio) { m.className = 'hint'; m.textContent = `Si te recomendó un cliente, cargá su código y obtené ${DB.config.descReferido}% de descuento.`; }
+    if (v.vacio) { m.className = 'hint'; m.textContent = `Si te recomendó un cliente, cargá su código y obtené ${DB.config.descReferido}% de descuento en tu mudanza.`; }
     else if (v.error) { m.className = 'msg bad'; m.textContent = v.error; }
-    else { m.className = 'msg ok'; m.textContent = `Código válido: ${v.pct}% de descuento en tu presupuesto.`; }
+    else { m.className = 'msg ok'; m.textContent = `Código válido: ${v.pct}% de descuento en tu primera mudanza.`; }
   };
   if (!NUBE) { pintar(validarCodigo(c.value, tel)); return; }
   clearTimeout(tCod);
@@ -1503,6 +2275,7 @@ const ACT = {
   tema: () => { const n = temaEfectivo() === 'dark' ? 'light' : 'dark'; aplicarTema(n); ls.set(KT, n); render(); },
   salir: async () => { await ops.salir(); S.user = null; cerrar(); render(); window.scrollTo(0, 0); },
   'pub-abrir': () => { S.pub = 'form'; render(); window.scrollTo(0, 0); },
+  'cuenta-nueva': () => { S.pub = 'cuenta'; render(); window.scrollTo(0, 0); },
   'pub-volver': () => { S.pub = null; S.pubOk = null; render(); window.scrollTo(0, 0); },
   demo: a => { $('#lu').value = a.dataset.u; $('#lp').value = a.dataset.p; $('#lp').focus(); },
   cerrar: () => cerrar(),
@@ -1533,6 +2306,26 @@ const ACT = {
     if (r && r.ok && r.referente && r.suma > 0) toast(`Realizado. ${r.referente} suma ${r.suma}% de descuento.`);
   },
   copiar: a => copiar(a.dataset.t),
+  'aviso-ir': a => {
+    const av = DB.avisos.find(x => x.id === a.dataset.id); if (!av) return;
+    if (av.refTipo === 'presupuesto' && av.refId && pres(av.refId)) mPresDet(av.refId);
+    else if (av.refTipo === 'turno') go('turnos');
+    else if (av.refTipo === 'descuentos') go('referidos');
+    else if (av.refTipo === 'inventario') go('inventario');
+  },
+  'p-pdf': async a => {
+    const p = pres(a.dataset.id); if (!p) return;
+    const r = await compartirPresupuesto(p);
+    if (r.error) toast(r.error); else if (r.descargado) toast('Se descargó el PDF. Adjuntalo en WhatsApp.');
+  },
+  'm-desc': a => mDesc(a.dataset.id),
+  'inv-de': a => { S.invCli = a.dataset.id; S.qInv = ''; cerrar(); go('inventario'); },
+  'm-item': a => mItem(a.dataset.id || null, a.dataset.cli),
+  'm-items': a => mItems(a.dataset.cli),
+  'del-item': async a => {
+    if (!armado(a, 'Confirmar eliminación')) return;
+    const r = await ops.eliminarItem(a.dataset.id); if (avisar(r)) { cerrar(); toast('Ítem eliminado'); render(); }
+  },
   'm-cliente': a => mCliente(a.dataset.id || null, a.dataset.unidad),
   'm-unidad': a => mUnidad(a.dataset.id || null),
   'del-cli': async a => {
@@ -1546,7 +2339,7 @@ const ACT = {
   'reset-ej': a => { if (DEMO && armado(a, '¿Seguro? Tocá de nuevo')) return reiniciar(true); },
   'reset-vacio': a => { if (DEMO && armado(a, '¿Seguro? Tocá de nuevo')) return reiniciar(false); }
 };
-const SOLO_DUENO = new Set(['t-confirmar','t-rechazar','t-realizado','p-aceptado','p-rechazado','p-realizado','m-cliente','m-unidad','del-cli','del-uni','reset-ej','reset-vacio','filtro-p']);
+const SOLO_DUENO = new Set(['t-confirmar','t-rechazar','t-realizado','p-aceptado','p-rechazado','p-realizado','m-cliente','m-unidad','del-cli','del-uni','reset-ej','reset-vacio','filtro-p','m-desc','inv-de','m-item','m-items','del-item']);
 document.addEventListener('click', e => {
   if (e.target.classList && e.target.classList.contains('ov')) { cerrar(); return; }
   const a = e.target.closest('[data-act]'); if (!a) return;
@@ -1559,8 +2352,17 @@ document.addEventListener('input', e => {
   const id = e.target.id;
   if (id === 'pc' || id === 'pt') refrescarCodigo();
   if (id === 'q-monto') { const f = e.target.closest('form'); const p = f && pres(f.dataset.id); if (p) prevCot(p); }
+  if (id === 'inv-q') { S.qInv = e.target.value; pintarInv(); }
 });
-document.addEventListener('change', e => { if (e.target.dataset && e.target.dataset.filtro === 'u') { S.filtroU = e.target.value; render(); } });
+document.addEventListener('change', e => {
+  const d = e.target.dataset || {};
+  if (d.filtro === 'u') { S.filtroU = e.target.value; render(); }
+  if (d.filtro === 'inv-cli') { S.invCli = e.target.value; S.qInv = ''; render(); }
+  if (d.pref) {
+    const caja = e.target, k = d.pref, on = caja.checked;
+    corre(async () => { const r = await ops.guardarPrefs({ [k]:on }); if (!avisar(r)) { caja.checked = !on; return; } toast('Elección guardada'); });
+  }
+});
 
 /* ---------- formularios ---------- */
 const leerPres = () => ({ nombre:$('#pn').value.trim(), telefono:$('#pt').value.trim(), servicio:$('#ps').value, fecha:$('#pf').value, origen:$('#po').value.trim(), destino:$('#pd').value.trim(), detalle:$('#pe').value.trim(), codigo:$('#pc') ? $('#pc').value : '' });
@@ -1571,7 +2373,7 @@ function validarPres(d){
   return '';
 }
 const entero = (s, min, max) => { const n = Number(String(s).trim()); return Number.isInteger(n) && n >= min && n <= max ? n : null; };
-const SOLO_DUENO_F = new Set(['cotizar','cliente','unidad','cfgDesc','cfgTurnos','cfgContacto']);
+const SOLO_DUENO_F = new Set(['cotizar','cliente','unidad','cfgDesc','cfgTurnos','cfgContacto','cfgAvisos','item','items']);
 const FORMS = {
   async login(){
     const u = $('#lu').value.trim().toLowerCase(), p = $('#lp').value, err = $('#lerr');
@@ -1600,8 +2402,38 @@ const FORMS = {
   async cotizar(f){
     const p = pres(f.dataset.id); if (!p || !['pendiente','cotizado'].includes(p.estado)) return;
     const m = parseMonto($('#q-monto').value); if (!(m > 0)) { errEn('Cargá el precio base.'); return; }
-    const r = await ops.cotizar(p.id, m, $('#q-nota').value.trim()); if (r.error) { errEn(r.error); return; }
-    cerrar(); toast('Cotización guardada'); render();
+    const r = await ops.confirmar(p.id, m, $('#q-nota').value.trim(), $('#q-hora').value || ''); if (r.error) { errEn(r.error); return; }
+    const q = pres(p.id);
+    cerrar(); render(); mPresDet(p.id);       // vuelve a mostrar el presupuesto ya enviado, listo para compartir
+    toast(q && q.clienteId ? `Presupuesto enviado a la cuenta de ${primerNombre(q.nombre)}` : 'Presupuesto confirmado. Compartilo por WhatsApp.');
+  },
+  async registro(){
+    const nombre = $('#rn').value.trim(), tel = $('#pt').value.trim(), usuario = $('#ru').value.trim().toLowerCase(), pass = $('#rp').value, codigo = ($('#pc').value || '').trim();
+    if (nombre.length < 2) return errEn('Escribí tu nombre y apellido.');
+    if (digits(tel).length < 8) return errEn('Escribí un teléfono válido, con característica.');
+    if (!/^[a-z0-9._-]{3,30}$/.test(usuario)) return errEn('El usuario necesita entre 3 y 30 letras o números, sin espacios ni tildes.');
+    if (pass.length < MINPASS) return errEn(`La contraseña necesita ${MINPASS} caracteres como mínimo.`);
+    const r = await ops.registrar({ nombre, telefono:tel, usuario, pass, codigo }); if (r.error) return errEn(r.error);
+    const l = await ops.login(usuario, pass);
+    S.pub = null;
+    if (l.error) { render(); window.scrollTo(0, 0); toast('Tu cuenta está creada. Ingresá con tu usuario y contraseña.'); return; }
+    S.view = 'inicio'; ultimaCarga = Date.now(); render(); window.scrollTo(0, 0);
+    toast(r.referido ? '¡Listo! Tu cuenta está creada y tenés tu descuento de referido.' : '¡Listo! Tu cuenta está creada.');
+  },
+  async item(f){
+    const nombre = $('#i-n').value.trim(), cant = entero($('#i-c').value, 1, 9999);
+    if (!nombre) return errEn('Escribí qué es.');
+    if (cant === null) return errEn('La cantidad es un número entre 1 y 9999.');
+    const r = await ops.guardarItem({ id:f.dataset.id || null, clienteId:f.dataset.cli, nombre, cantidad:cant, condicion:$('#i-k').value, nota:$('#i-o').value.trim(), ingreso:$('#i-f').value || '' });
+    if (r.error) return errEn(r.error);
+    cerrar(); toast(f.dataset.id ? 'Ítem guardado' : 'Ítem agregado'); render();
+  },
+  async items(f){
+    const lista = parsearItems($('#i-l').value);
+    if (!lista.length) return errEn('Escribí al menos un ítem.');
+    if (lista.length > 100) return errEn('Cargá hasta 100 ítems por vez.');
+    const r = await ops.guardarItems(lista.map(x => ({ ...x, clienteId:f.dataset.cli, condicion:'Bueno', ingreso:hoyISO() }))); if (r.error) return errEn(r.error);
+    cerrar(); toast(`${lista.length} ${lista.length === 1 ? 'ítem cargado' : 'ítems cargados'}`); render();
   },
   async cliente(f){
     const id = f.dataset.id, c = id ? usr(id) : null;
@@ -1624,9 +2456,10 @@ const FORMS = {
     cerrar(); toast('Guardamueble guardado'); render();
   },
   async cfgDesc(){
-    const a = entero($('#c-ref').value, 0, 100), b = entero($('#c-rid').value, 0, 100), t = entero($('#c-top').value, 0, 100);
-    if (a === null || b === null || t === null) return errEn('Usá números enteros entre 0 y 100.');
-    const r = await ops.guardarConfig({ descReferente:a, descReferido:b, tope:t }); if (r.error) { errEn(r.error); return; }
+    const a = entero($('#c-ref').value, 0, 100), b = entero($('#c-rid').value, 0, 100), t = entero($('#c-top').value, 0, 100), v = entero($('#c-ven').value, 0, 60);
+    if (a === null || b === null || t === null) return errEn('Los porcentajes son números enteros entre 0 y 100.');
+    if (v === null) return errEn('El vencimiento va de 0 a 60 meses (0 = no vencen).');
+    const r = await ops.guardarConfig({ descReferente:a, descReferido:b, tope:t, vencReferidosMeses:v }); if (r.error) { errEn(r.error); return; }
     toast('Descuentos guardados'); render();
   },
   async cfgTurnos(){
@@ -1634,12 +2467,23 @@ const FORMS = {
     if (cupo === null) return errEn('El cupo es un número entre 1 y 50.');
     if (hs === null) return errEn('Las horas de cancelación van de 0 a 72.');
     if (ant === null) return errEn('Los días de anticipación van de 1 a 90.');
-    const fr = $('#a-fr').value.split(/[,\s;]+/).filter(Boolean).map(s => { const m = s.match(/^(\d{1,2}):(\d{2})$/); return m && +m[1] < 24 && +m[2] < 60 ? pad(+m[1]) + ':' + m[2] : null; });
-    if (!fr.length || fr.includes(null)) return errEn('Los horarios van en formato 24 hs, por ejemplo 09:00, 10:30.');
+    const leerHoras = id => $(id).value.split(/[,\s;]+/).filter(Boolean).map(s => { const m = s.match(/^(\d{1,2}):(\d{2})$/); return m && +m[1] < 24 && +m[2] < 60 ? pad(+m[1]) + ':' + m[2] : null; });
+    const fr = leerHoras('#a-fr'), fs = leerHoras('#a-fs');
+    if (!fr.length || fr.includes(null)) return errEn('Los horarios de lunes a viernes van en formato 24 hs, por ejemplo 09:00, 10:00.');
+    if (fs.includes(null)) return errEn('Los horarios de sábados van en formato 24 hs, por ejemplo 09:00, 10:00.');
     const dias = $$('input[name="dia"]:checked').map(i => +i.value);
     if (!dias.length) return errEn('Elegí al menos un día de atención.');
-    const r = await ops.guardarConfig({ cupo, horasCancelar:hs, diasAnticipo:ant, franjas:[...new Set(fr)].sort(), dias }); if (r.error) { errEn(r.error); return; }
+    if (!fs.length && (dias.includes(6) || dias.includes(0))) return errEn('Cargá los horarios de sábados o desactivá ese día.');
+    const r = await ops.guardarConfig({ cupo, horasCancelar:hs, diasAnticipo:ant, franjas:[...new Set(fr)].sort(), franjasSab:[...new Set(fs)].sort(), dias }); if (r.error) { errEn(r.error); return; }
     toast('Turnos guardados'); render();
+  },
+  async cfgAvisos(){
+    const rt = entero($('#a-rt').value, 1, 48), rm = entero($('#a-rm').value, 1, 48);
+    if (rt === null || rm === null) return errEn('Las horas van de 1 a 48.', 'm-err3');
+    const dias = $$('input[name="pdia"]:checked').map(i => +i.value);
+    if (!dias.length) return errEn('Elegí al menos un día para las promociones.', 'm-err3');
+    const r = await ops.guardarConfig({ recordarTurnoHs:rt, recordarMudanzaHs:rm, promoDias:dias }); if (r.error) { errEn(r.error, 'm-err3'); return; }
+    toast('Avisos guardados'); render();
   },
   async cfgContacto(){
     const w = $('#a-wa').value.trim(); if (w && digits(w).length < 8) { toast('Escribí un número válido o dejalo vacío.'); return; }
@@ -1666,6 +2510,7 @@ document.addEventListener('submit', async e => {
   const n = e.target.dataset.form, h = FORMS[n]; if (!h) return;
   if (SOLO_DUENO_F.has(n) && !esDueno()) return;
   if (n === 'cfgPass' && !esDueno()) return;
+  if (n === 'registro' && S.user) return;
   if (['miClave','eliminarCuenta'].includes(n) && (!S.user || esDueno())) return;
   await corre(() => h(e.target));
 });
