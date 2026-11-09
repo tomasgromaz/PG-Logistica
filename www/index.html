@@ -400,7 +400,7 @@ const waNumero = tel => { let d = digits(tel).replace(/^0+/, ''); if (!d) return
 const waLink = (tel, texto) => `https://wa.me/${waNumero(tel)}?text=${encodeURIComponent(texto)}`;
 
 const SERVICIOS = ['Mudanza','Movimiento de maquinaria','Guardamuebles (nuevo)','Flete o traslado','Otro'];
-const CONDICIONES = ['Bueno','Regular','Con daños'];
+const CONDICIONES = ['Bueno','Regular'];
 const MOTIVOS = ['Retirar cosas','Dejar cosas','Revisar mi guardamueble','Otro'];
 
 /* ---------- almacenamiento ---------- */
@@ -482,7 +482,7 @@ async function crearBase(conEjemplos){
   db.inventario.push(
     I('u-maria','Caja de libros',12,'Bueno','Rotuladas por tema',230), I('u-maria','Sillón de 3 cuerpos',1,'Bueno','Funda gris, con nylon',230),
     I('u-maria','Mesa de comedor',1,'Regular','Una pata con raspón',230), I('u-maria','Silla de comedor',6,'Bueno','',230),
-    I('u-maria','Lámpara de pie',2,'Bueno','Envueltas en plástico burbuja',60), I('u-maria','Bicicleta rodado 26',1,'Con daños','Falta un pedal',60),
+    I('u-maria','Lámpara de pie',2,'Bueno','Envueltas en plástico burbuja',60), I('u-maria','Bicicleta rodado 26',1,'Regular','Falta un pedal',60),
     I('u-carlos','Heladera',1,'Bueno','Desenchufada, puerta atada',110), I('u-carlos','Colchón de 2 plazas',1,'Bueno','Con funda',110),
     I('u-carlos','Caja de vajilla',5,'Regular','Frágil',90), I('u-carlos','Escritorio',1,'Bueno','',40),
     I('u-lucia','Cama de 2 plazas',1,'Bueno','Desarmada: base, respaldo y tornillos en bolsa',70),
@@ -1678,7 +1678,7 @@ function vAvisos(){
 }
 
 /* ---------- inventario del guardamuebles ---------- */
-const COND = { 'Bueno':'ok', 'Regular':'warn', 'Con daños':'bad' };
+const COND = { 'Bueno':'ok', 'Regular':'warn' };
 function filtrarInv(items){
   const q = sinAcentos(S.qInv.toLowerCase().trim());
   return q ? items.filter(i => sinAcentos((i.nombre + ' ' + i.nota).toLowerCase()).includes(q)) : items;
@@ -1691,8 +1691,7 @@ function listaInvHTML(items, editable){
     <div class="grow"><div class="t-main">${esc(i.nombre)}</div>${i.nota ? `<div class="t-sub">${esc(i.nota)}</div>` : ''}<div class="t-note">${i.ingreso ? 'Ingresó el ' + fmtLargo(i.ingreso) : 'Sin fecha de ingreso'}</div></div>
     <div class="side"><span class="badge ${COND[i.condicion] || ''}">${esc(i.condicion)}</span>${editable ? `<button class="btn sec sm" data-act="m-item" data-id="${i.id}">${ic('edit')}Editar</button>` : ''}</div></div></li>`).join('')}</ul>`;
 }
-const kpisInv = items => `<div class="kpis"><div class="kpi"><b>${items.length}</b><span>Ítems</span></div><div class="kpi"><b>${items.reduce((s, i) => s + i.cantidad, 0)}</b><span>Bultos en total</span></div>
-  <div class="kpi ${items.some(i => i.condicion === 'Con daños') ? 'hot' : ''}"><b>${items.filter(i => i.condicion === 'Con daños').length}</b><span>Con daños</span></div></div>`;
+const kpisInv = items => `<div class="kpis"><div class="kpi"><b>${items.length}</b><span>Ítems</span></div><div class="kpi"><b>${items.reduce((s, i) => s + i.cantidad, 0)}</b><span>Bultos en total</span></div></div>`;
 function pintarInv(){
   const box = $('#inv-lista'); if (!box) return;
   const items = itemsDe(esDueno() ? S.invCli : S.user.id);
