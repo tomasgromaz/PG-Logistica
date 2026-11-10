@@ -968,6 +968,7 @@ async function refrescarOcupacion(){
   } catch(e){}
 }
 function forzarSalida(msg){
+  PUSH.soltarLocal();
   S.user = null; S.view = null; guardarSesion(null); DB = baseVacia(); cerrar(); render(); window.scrollTo(0, 0);
   if (msg) toast(msg);
   cargarPublico().then(() => { if (!S.user) render(); });
@@ -1003,6 +1004,7 @@ const opsNube = {
     } catch(e){ S.user = null; guardarSesion(null); return { error:e.message }; }
   },
   async salir(){
+    await PUSH.quitar();                                   // este teléfono deja de recibir los avisos de esta cuenta
     if (ses) { const a = ses.access; fetch(NUBE_URL + '/auth/v1/logout', { method:'POST', headers:{ apikey:NUBE_KEY, Authorization:'Bearer ' + a } }).catch(() => {}); }
     guardarSesion(null); DB = baseVacia();
     await cargarPublico();
@@ -1061,7 +1063,7 @@ const opsNube = {
   eliminarMiCuenta: clave => envolver(async () => {
     try { await verificarClave(clave); } catch(e){ if (e.status !== 400) throw e; return { error:'La contraseña no es correcta.' }; }
     await FN({ accion:'eliminar_yo' });
-    guardarSesion(null); return { ok:true };
+    PUSH.soltarLocal(); guardarSesion(null); return { ok:true };
   }),
   // cuenta propia: la crea la función de servidor (con límite por conexión) y después se ingresa con ella
   registrar: d => envolver(async () => {
@@ -1239,6 +1241,89 @@ function quitarCliente(id, anonimizar){
 const ops = NUBE ? opsNube : opsLocal;
 
 /* =====================================================================
+   Notificaciones en el teléfono (Firebase Cloud Messaging)
+   Solo existen en la app instalada (Capacitor) y con el servidor real:
+   en el navegador y en modo demo nada de esto hace nada.
+   El servidor manda cada aviso nuevo (los mismos de la campana) a los
+   teléfonos que esa persona registró. Cada persona puede apagarlas.
+   ===================================================================== */
+const VERSION_APP = '10 nov 2026';
+const PUSH = (() => {
+  const KOFF = 'pg-push-off', KTOK = 'pg-push-tok';
+  let escuchando = false, iniciadoPara = null, pendiente = false;
+
+  const plugin = () => {
+    try {
+      const c = window.Capacitor;
+      return (NUBE && c && c.isNativePlatform && c.isNativePlatform() && c.Plugins && c.Plugins.FirebaseMessaging) || null;
+    } catch(e){ return null; }
+  };
+  const plataforma = () => { try { return window.Capacitor.getPlatform() === 'ios' ? 'ios' : 'android'; } catch(e){ return 'android'; } };
+  const apagados = () => { try { return JSON.parse(ls.get(KOFF) || '{}') || {}; } catch(e){ return {}; } };
+  const guardarApagado = (id, off) => { const m = apagados(); if (off) m[id] = 1; else delete m[id]; ls.set(KOFF, JSON.stringify(m)); };
+
+  const disponible = () => !!plugin();
+  const activo = () => !!S.user && !apagados()[S.user.id];
+
+  async function registrar(token){
+    if (!token || !S.user) return;
+    ls.set(KTOK, token);
+    try { await RPC('registrar_dispositivo', { p_token:token, p_plataforma:plataforma() }); }
+    catch(e){ console.warn('No se pudo registrar el teléfono:', e && e.message); }
+  }
+  function abrirAvisos(){
+    if (S.user) { if (S.view !== 'avisos') go('avisos'); refrescarSilencioso(true); }     // se trae el aviso nuevo aunque los datos sean de hace poco
+    else pendiente = true;                          // la app todavía está arrancando: se abre cuando haya sesión
+  }
+  function escuchar(){
+    const FM = plugin(); if (!FM || escuchando) return; escuchando = true;
+    try {
+      FM.addListener('tokenReceived', ev => { if (ev && ev.token && S.user && activo()) registrar(ev.token); });
+      FM.addListener('notificationReceived', () => { if (S.user) refrescarSilencioso(true, true); });   // con la app abierta: se muestra como cartel y en la campana
+      FM.addListener('notificationActionPerformed', () => abrirAvisos());                              // al tocar la notificación
+    } catch(e){ escuchando = false; }
+  }
+  // 'ok' | 'denegado' | 'error' | 'no' (no disponible o apagado)
+  async function iniciar(){
+    const FM = plugin();
+    if (!FM || !S.user || !activo() || iniciadoPara === S.user.id) return 'no';
+    iniciadoPara = S.user.id; escuchar();
+    try {
+      const p = await FM.requestPermissions();
+      if (!p || p.receive !== 'granted') return 'denegado';
+      const t = await FM.getToken();
+      await registrar(t && t.token);
+      return 'ok';
+    } catch(e){ iniciadoPara = null; console.warn('Notificaciones no disponibles:', e && e.message); return 'error'; }
+  }
+  // Al salir: este teléfono deja de recibir los avisos de esta persona (otra puede ingresar después).
+  async function quitar(){
+    const FM = plugin(); iniciadoPara = null; if (!FM) return;
+    const tok = ls.get(KTOK);
+    if (tok && S.user) { try { await RPC('quitar_dispositivo', { p_token:tok }); } catch(e){} }
+    ls.del(KTOK);
+    try { await FM.deleteToken(); } catch(e){}
+  }
+  function soltarLocal(){                             // sin sesión (venció o se eliminó la cuenta): solo se invalida el código de este teléfono
+    const FM = plugin(); iniciadoPara = null; ls.del(KTOK); if (!FM) return;
+    try { FM.deleteToken().catch(() => {}); } catch(e){}
+  }
+  async function cambiar(on){
+    if (!S.user) return 'no';
+    guardarApagado(S.user.id, !on);
+    if (!on) { await quitar(); return 'apagado'; }
+    iniciadoPara = null;
+    return iniciar();
+  }
+  function alRenderizar(){
+    if (!S.user) return;
+    iniciar();
+    if (pendiente) { pendiente = false; setTimeout(() => { if (S.user) go('avisos'); }, 0); }
+  }
+  return { disponible, activo, iniciar, quitar, soltarLocal, cambiar, alRenderizar, escuchar };
+})();
+
+/* =====================================================================
    Interfaz
    ===================================================================== */
 const ICONS = {
@@ -1341,7 +1426,7 @@ function vLogin(){
         <button type="button" data-act="demo" data-u="maria" data-p="1234"><span>Cliente María</span><span>maria · 1234</span></button>
         <button type="button" data-act="demo" data-u="lucia" data-p="1234"><span>Cliente Lucía</span><span>lucia · 1234</span></button>
       </div></details>` : ''}
-      ${NUBE ? `<p class="hint"><a href="${POLITICA_URL}" target="_blank" rel="noopener">Política de privacidad</a></p>` : ''}
+      ${NUBE ? `<p class="hint"><a href="${POLITICA_URL}" target="_blank" rel="noopener">Política de privacidad</a> · Versión ${VERSION_APP}</p>` : ''}
     </section>
   </div>`;
 }
@@ -1652,10 +1737,15 @@ function tiempoRel(ms){
   const d = Math.round(h / 24); if (d === 1) return 'ayer'; if (d < 7) return `hace ${d} días`;
   return fmtCorto(isoDate(new Date(ms)));
 }
+function pushHTML(){
+  if (!PUSH.disponible()) return '';
+  return `<section class="card"><h2 class="h2">Notificaciones en este teléfono</h2>
+    <label class="sw"><input type="checkbox" data-push="1" ${PUSH.activo() ? 'checked' : ''}><span class="sw-t"><b>Recibir avisos aunque la app esté cerrada</b><small>Te llegan al teléfono los mismos avisos de la campana. Si no te llegan, revisá que estén permitidas en los ajustes del teléfono.</small></span></label></section>`;
+}
 function prefsAvisosHTML(){
   const a = S.user.avisos || {}, on = k => a[k] !== false;
   const sw = (k, t, sub) => `<label class="sw"><input type="checkbox" data-pref="${k}" ${on(k) ? 'checked' : ''}><span class="sw-t"><b>${t}</b><small>${sub}</small></span></label>`;
-  if (esDueno()) return `<section class="card"><h2 class="h2">Qué avisos quiero recibir</h2>
+  if (esDueno()) return pushHTML() + `<section class="card"><h2 class="h2">Qué avisos quiero recibir</h2>
     <p class="sub">Elegí de qué sectores querés recibir avisos. Hoy la elección vale para toda la cuenta de administración.</p>
     <div class="sw-group"><div class="eyebrow">Mudanzas, maquinaria y otros servicios</div>
       ${sw('mud_nuevos', 'Pedidos de presupuesto y respuestas', 'Cuando entra un pedido nuevo o un cliente acepta, rechaza o cancela.')}
@@ -1663,7 +1753,7 @@ function prefsAvisosHTML(){
     <div class="sw-group"><div class="eyebrow">Guardamuebles</div>
       ${sw('gm_nuevos', 'Turnos y pedidos nuevos', 'Turnos por confirmar o cancelados, y pedidos de guardamuebles nuevos.')}
       ${sw('gm_recordatorios', 'Recordatorios de turnos', 'Unas horas antes de cada turno confirmado.')}</div></section>`;
-  return `<section class="card"><h2 class="h2">Qué avisos quiero recibir</h2>
+  return pushHTML() + `<section class="card"><h2 class="h2">Qué avisos quiero recibir</h2>
     ${sw('promos', 'Promociones y descuentos', 'Tu descuento del mes y un resumen semanal. Los avisos de tus turnos y presupuestos siempre te llegan.')}</section>`;
 }
 function vAvisos(){
@@ -2178,6 +2268,7 @@ function render(){
   const V = esDueno() ? VISTAS_D : VISTAS_C;
   if (!V[S.view]) S.view = esDueno() ? 'resumen' : 'inicio';
   root.innerHTML = shell(V[S.view]());
+  PUSH.alRenderizar();
 }
 function go(v){
   S.view = v;
@@ -2357,6 +2448,16 @@ document.addEventListener('change', e => {
   const d = e.target.dataset || {};
   if (d.filtro === 'u') { S.filtroU = e.target.value; render(); }
   if (d.filtro === 'inv-cli') { S.invCli = e.target.value; S.qInv = ''; render(); }
+  if (d.push !== undefined) {                  // notificaciones en este teléfono
+    const caja = e.target, on = caja.checked;
+    corre(async () => {
+      const r = await PUSH.cambiar(on);
+      if (!on) { toast('Notificaciones desactivadas en este teléfono'); return; }
+      if (r === 'ok') { toast('Notificaciones activadas'); return; }
+      caja.checked = false; await PUSH.cambiar(false);
+      toast(r === 'denegado' ? 'El teléfono no permite notificaciones. Activalas para PG Logística en los ajustes del teléfono.' : 'No se pudieron activar las notificaciones. Probá de nuevo más tarde.');
+    });
+  }
   if (d.pref) {
     const caja = e.target, k = d.pref, on = caja.checked;
     corre(async () => { const r = await ops.guardarPrefs({ [k]:on }); if (!avisar(r)) { caja.checked = !on; return; } toast('Elección guardada'); });
@@ -2518,6 +2619,7 @@ document.addEventListener('submit', async e => {
 (async function init(){
   const t = ls.get(KT); if (t) aplicarTema(t);
   if (NUBE) {
+    PUSH.escuchar();                      // para enterarse si la app se abrió tocando una notificación
     DB = baseVacia();
     $('#app').innerHTML = '<div class="boot" role="status">Cargando…</div>';
     const r = await ops.restaurar();

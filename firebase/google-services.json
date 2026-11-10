@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "123342210195",
+    "project_id": "pg-logistica-b9299",
+    "storage_bucket": "pg-logistica-b9299.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:123342210195:android:6bcd390662ea33faf3f966",
+        "android_client_info": {
+          "package_name": "app.pglogistica.clientes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVG1W1WOqZUtYXgZj99vIkHB1VI1ULlrw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

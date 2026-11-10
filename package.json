@@ -1,18 +1,20 @@
 {
   "name": "pg-logistica",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
-  "description": "PG Logística: turnos, presupuestos, descuentos, inventario y avisos (envoltorio Capacitor)",
+  "description": "PG Logística: turnos, presupuestos, descuentos, inventario, avisos y notificaciones (envoltorio Capacitor)",
   "scripts": {
     "assets": "capacitor-assets generate",
     "sync": "cap sync"
   },
   "dependencies": {
+    "@capacitor-firebase/messaging": "^8.0.0",
     "@capacitor/android": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@capacitor/filesystem": "^8.0.0",
     "@capacitor/ios": "^8.0.0",
-    "@capacitor/share": "^8.0.0"
+    "@capacitor/share": "^8.0.0",
+    "firebase": "^12.0.0"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

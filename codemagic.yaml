@@ -25,6 +25,11 @@ workflows:
         script: |
           [ -d android ] || npx cap add android
           npx capacitor-assets generate --android
+          # Notificaciones: el archivo de Firebase y el ícono de la barra de estado.
+          # Si falta firebase/google-services.json la app se compila igual, pero sin notificaciones.
+          if [ -f firebase/google-services.json ]; then cp firebase/google-services.json android/app/google-services.json; else echo "AVISO: falta firebase/google-services.json -> sin notificaciones"; fi
+          cp -R android-res/. android/app/src/main/res/
+          grep -q default_notification_icon android/app/src/main/AndroidManifest.xml || sed -i 's#</application>#        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_pg" />\n        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/pg_push_color" />\n    </application>#' android/app/src/main/AndroidManifest.xml
           npx cap sync android
       - name: Numerar la versión (cada compilación sube el número)
         script: |
@@ -59,6 +64,11 @@ workflows:
         script: |
           [ -d android ] || npx cap add android
           npx capacitor-assets generate --android
+          # Notificaciones: el archivo de Firebase y el ícono de la barra de estado.
+          # Si falta firebase/google-services.json la app se compila igual, pero sin notificaciones.
+          if [ -f firebase/google-services.json ]; then cp firebase/google-services.json android/app/google-services.json; else echo "AVISO: falta firebase/google-services.json -> sin notificaciones"; fi
+          cp -R android-res/. android/app/src/main/res/
+          grep -q default_notification_icon android/app/src/main/AndroidManifest.xml || sed -i 's#</application>#        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_pg" />\n        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/pg_push_color" />\n    </application>#' android/app/src/main/AndroidManifest.xml
           npx cap sync android
       - name: Compilar la versión de prueba
         script: |
@@ -82,6 +92,11 @@ workflows:
         distribution_type: app_store
         bundle_identifier: app.pglogistica.clientes
     scripts:
+      - name: Sin notificaciones en iPhone (por ahora)
+        script: |
+          # Las notificaciones de iPhone necesitan pasos extra (ver GUIA-PUBLICAR.md, "iPhone"). Hasta hacerlos,
+          # se quita el complemento de Firebase para que la compilación de iPhone no cambie.
+          npm pkg delete dependencies.@capacitor-firebase/messaging dependencies.firebase
       - name: Instalar dependencias
         script: npm install
       - name: Generar el proyecto de iPhone, íconos y pantalla de inicio

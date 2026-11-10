@@ -1,0 +1,7 @@
+Acá va el archivo google-services.json que descargás de Firebase (ver GUIA-PUBLICAR.md, Paso 6).
+
+  tiendas/firebase/google-services.json     <- Android
+
+Ese archivo NO es secreto (va dentro de la app), así que puede subirse a GitHub junto con el resto.
+NO subas acá la "clave privada" de la cuenta de servicio: esa va solamente en Supabase.
+Sin este archivo la app se compila igual, pero sin notificaciones.
